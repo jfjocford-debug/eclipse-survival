@@ -1,29 +1,27 @@
-# Cloud build: Unity WebGL on GitHub (no local Unity install)
+# Cloud build with Unity Build Automation (replaces the GameCI route)
 
-Result: every push to `main` builds the game on GitHub's servers and publishes it at
-`https://<your-github-name>.github.io/<repo-name>/`, playable in iPhone Safari.
+The GameCI workflow cannot be used: the current Unity Hub no longer writes the classic `.ulf` license file it needs.
+Unity Build Automation is Unity's own service; Unity's pricing page says anyone with a Unity ID can use it free, with a monthly allowance of Linux build minutes.
 
-## One-time setup
+## Setup (Unity Dashboard, https://cloud.unity.com)
 
-1. **GitHub account and repository.** Create a repository. GitHub Pages on a free account needs a PUBLIC repository, so the source will be public. Upload the contents of this project folder (including the hidden `.github` folder) to the `main` branch.
-2. **Turn on Pages.** Repository > Settings > Pages > Source: "GitHub Actions".
-3. **Get a Unity license file (.ulf).** GameCI documents this as: install Unity Hub, sign in with your Unity account, open Preferences > Licenses > Add > free Personal license, and complete the steps even if a license already shows. The file is then at:
-   - Windows `C:\ProgramData\Unity\Unity_lic.ulf`
-   - Mac `/Library/Application Support/Unity/Unity_lic.ulf`
-   Only Unity Hub is needed. The Unity Editor itself does not have to be installed (not yet verified for the latest Hub; if Hub refuses, tell me the message).
-4. **Add three secrets.** Repository > Settings > Secrets and variables > Actions > New repository secret:
-   - `UNITY_LICENSE`: paste the full text of the `.ulf` file
-   - `UNITY_EMAIL`: your Unity account email
-   - `UNITY_PASSWORD`: your Unity account password. Use a password unique to Unity, letters and digits only (GameCI reports problems with special characters).
-5. **Run it.** Actions tab > "Build and publish WebGL" > Run workflow. The first build is slow (about 20 to 40 minutes is typical, because the Library cache is empty). Later builds are faster.
+1. Sign in with your Unity account. If asked, create an organization and a project (any name).
+2. Open DevOps > Build Automation > Configurations > Get started, and configure source control:
+   - Source control tab, choose GitHub.
+   - Create a GitHub Personal Access Token (GitHub > Settings > Developer settings > Personal access tokens). For this public repository a classic token with the `public_repo` scope is enough (add `write:repo_hook` only if you want auto-build). Paste it and choose Authorize.
+   - Select `jfjocford-debug/eclipse-survival`, then Save.
+3. Create a build target (Target setup):
+   - Target name: `webgl`
+   - Branch: `main`
+   - Auto detect Unity version: on (reads 6000.3.12f1)
+   - Builder operating system: Linux
+   - Platform: WebGL
+4. Advanced settings: if a "Pre-export method" field exists, enter `EclipseSurvival.Editor.CloudHooks.PreExport`. This creates the game's scenes and data assets before the build, which are not stored in the repository.
+5. Save, then Run build.
+6. When it finishes, open the build and use Download or Share.
 
-## Reading the result
+## Known unknowns
 
-- Green run: open the Pages link on your iPhone.
-- Red run: open the failed step and send me the first error lines. Compile errors, setup-menu errors and license errors look different, and I can tell them apart.
-
-## What is untested
-
-- The WebGL build method (`Eclipse > Build > WebGL test build`) has not run in real Unity.
-- Touch input, the safe area and performance in iPhone Safari are unknown. WebGL on iPhone is memory-limited.
-- Whether Unity permits Personal-license activation on a cloud build server is a licensing-terms question. GameCI documents it as supported.
+- Whether the free Linux machine has enough memory for a WebGL build.
+- Whether the Pre-export method field is offered for WebGL; without it the build may contain no scenes.
+- How a finished WebGL build can be played on an iPhone. The build is a folder of files; it needs a web host (the Share page, or GitHub Pages, or similar).
