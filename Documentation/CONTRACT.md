@@ -1,0 +1,12 @@
+# Unity integration contract
+Namespace EclipseSurvival.Core; no Unity dependency in deterministic core. PascalCase public fields/properties.
+V2 struct: X,Y (float), constructor, Magnitude, Normalized, +,-,*float; Dot/Distance static.
+Enums: RunMode Ready/Playing/Paused/Dead/Survived; DayPhase Day/Warning/Eclipse; Stance Walk/Jog/Crouch/Crawl; Item Crowbar/Pistol/Food/Medicine/Tools/Ammo; Weapon Fists/Crowbar/Pistol; EnemyKind Bandit/Scavenger/Apostle; AiState Patrol/Chase/Flee/Attack.
+Actor: Position V2, Face V2, Health, Stamina, Stance, Running, Moving, Dodge, Invulnerable, Cooldown, Step, Noise.
+Enemy: Id int, Position V2, Kind, Health, State, Target V2, Cooldown, Flash, Windup, Stolen.
+Loot: Id int, Area string, Item enum, Count int, Position V2, Taken bool.
+Building: Id, Name string, Position V2, Width, Height float, Door V2, Hint string.
+GameState: Mode, Phase, Time, Duration, DayDuration, NightDuration, Cycle; Player Actor; Area string; Inventory int[6] enum indices; Equipped Weapon; WallTools int, WallIntegrity float (see CORE.md Wall Integrity); Enemies List<Enemy>; Loot List<Loot>; Data GameData; Elapsed; Message, MessageTime; Kills, Collected; AutoLoot; LockId=-1; Shake; Event string, EventId int (legacy: latest event only), Events List<GameEvent> (bounded log, see CORE.md Event bus); Best int; LastAttack string; other internal core fields freely.
+Simulation static: Buildings readonly list; Create(uint seed=1,bool quick=false,GameData data=null) returnsGameState (data validated; see CORE.md Game data); Start(s); Step(s,floatdt,V2move,boolrun=false); Attack(s,boolheavy=false) returnsbool; Dodge(s,V2?direction=null); Interact(s); UseItem(s,Item); NextCycle(s); IsSafe(s) bool; WallCapacity(s) float; WallPressure(s) float; Context(s) string (null whennone); AimTarget(s) Enemy; TapLoot(s,V2) bool; CanWalk(V2,string,floatradius=.13f) bool.
+Coordinates preserve browser logical10x10 map, interior6x6. Projection belongs Unity view: logical (x,y) => ((x-y)*1f, -(x+y)*.5f) worldXY. Input in screen up/right is inverse-projected normalized.
+Unity Physics2D: external optional CollisionProbe Func<V2,string,bool> property on Simulation; CanWalk applies authoredcorebounds/buildings PLUS optionalprobe. Unity root wires probe to actualCollider2D overlap check against static walls, using worldprojection. Purecoretests leaveunset. Core internal movement remains subdivided<=.09tiles.

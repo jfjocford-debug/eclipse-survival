@@ -1,0 +1,5 @@
+/workspace/eclipse-unity-tools/unity/Editor/Data/Managed/UnityEngine/UnityEditor.CoreModule.dll :: UnityEditor.Audio.AudioMixerController
+UnityEditor.Audio.AudioMixerController UnityEditor.Audio.AudioMixerController::CreateMixerControllerAtPath(System.String)
+UnityEditor.Audio.AudioMixerGroupController UnityEditor.Audio.AudioMixerController::CreateNewGroup(System.String,System.Boolean)
+System.Void UnityEditor.Audio.AudioMixerController::AddChildToParent(UnityEditor.Audio.AudioMixerGroupController,UnityEditor.Audio.AudioMixerGroupController)
+UnityEditor.Audio.AudioMixerGroupController UnityEditor.Audio.AudioMixerController::get_masterGroup()

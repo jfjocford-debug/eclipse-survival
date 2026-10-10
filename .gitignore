@@ -1,0 +1,17 @@
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Bb]uilds/
+.vs/
+*.csproj
+*.sln
+*.keystore
+*.jks
+*.mobileprovision
+*.p12
+.DS_Store
+
+!Tests/CoreHarness/CoreHarness.csproj
+**/bin/

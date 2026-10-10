@@ -1,0 +1,12 @@
+{
+  "name": "EclipseSurvival.Tests.PlayMode",
+  "references": [
+    "EclipseSurvival.Core",
+    "EclipseSurvival.Runtime",
+    "UnityEngine.UI"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

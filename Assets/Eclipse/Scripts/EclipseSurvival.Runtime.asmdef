@@ -1,0 +1,13 @@
+{
+  "name": "EclipseSurvival.Runtime",
+  "rootNamespace": "EclipseSurvival",
+  "references": [
+    "EclipseSurvival.Core",
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.2D.Runtime"
+  ],
+  "autoReferenced": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "EclipseSurvival.Tests.EditMode",
+  "references": [
+    "EclipseSurvival.Core",
+    "EclipseSurvival.Runtime",
+    "EclipseSurvival.Editor",
+    "Unity.InputSystem",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false,
+  "includePlatforms": [
+    "Editor"
+  ]
+}

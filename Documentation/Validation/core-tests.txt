@@ -1,0 +1,45 @@
+PASS Full 150s day, warning and 90s Eclipse survive in reinforced shelter
+PASS Workshop supplies are unique, portable and reinforce the safehouse
+PASS Walls are built one tool at a time, capped, and cannot be built during the Eclipse
+PASS Wall siege: pressure starts at the door; tools decide hold, warning, breach and exposure
+PASS All authored doors and loot are reachable; movement cannot cross walls
+PASS Melee, pistol ammo, kill rewards and collision-blocked gunfire
+PASS Dodge prevents a telegraphed hit; running drains and rest restores stamina
+PASS Food and medicine consume inventory without inventing or overhealing
+PASS Pause freezes the complete state; next cycle resets barricades and loot
+PASS Scavenger steals one tool and returns stolen tools on defeat
+PASS Apostle has a dodge window; exposure kills and death freezes the clock
+PASS Auto-loot priority, radius, room boundaries and duplicate prevention
+PASS Auto-loot cannot cross walls; tap pickup works with automation off
+PASS Soft-lock aim: angle-weighted choice, sticky lock, and dead or out-of-cone exclusion
+PASS Heavy attacks trade resources for damage and failures spend nothing
+PASS Analog facing remains normalized and releasing input has no drift
+PASS Seeded state and action sequences are deterministic
+PASS Collision probe adds solid walls without replacing authored bounds
+PASS External collision probe also blocks target rays and loot rays
+PASS Warm movement, AI, aiming and effect updates allocate no managed bytes
+PASS Delta-time clamp, invalid input defense and effect compaction
+PASS Movement speeds and stealth visibility preserve all four stances
+PASS Melee and ranged aim obey their ranges and area boundaries
+PASS Melee acquires side and point-blank targets that the old narrow cone missed
+PASS Melee swing lunges toward a target in reach and lands the hit
+PASS An attack pressed just before recovery is buffered, and expires or cancels correctly
+PASS Event bus delivers every event once and in order, with payloads, by kind and to all
+PASS Event bus: a new game state restarts delivery and unsubscribed handlers stop hearing
+PASS Event log is bounded and the bus reports events it could not deliver in time
+PASS AI state changes are announced once per change, with enemy and new state
+PASS A surviving Eclipse announces warning, eclipse, siege, cracking and end; a breach names the Apostle
+PASS Automatic equipment pickup retains the selected weapon and is throttled
+PASS Paused actions cannot spend resources or collect loot
+PASS Every one of the five interiors can be entered and exited
+PASS Directional dodge normalizes its direction and consumes exactly 22 stamina
+PASS Generated loot positions and RNG sequence match browser fixture
+PASS Actors draw over a building from its east and south sides and behind it elsewhere, across the whole street
+PASS Crouch, prone and stand: taps, holds, dodge, attacks and paused input behave as designed
+PASS Pushing to run from a crouch or prone stands the player up once and jogs until the stick eases off
+PASS A light swing at low stamina goes through weaker with a cue; a heavy one is refused
+PASS Shipped game data is valid, complete and seeds the run
+PASS Validation names every kind of broken data, and a broken set cannot start a game
+PASS The Eclipse profile in force follows the cycle: spawns, length, exposure and wall pressure
+PASS Editing data changes behavior: damage, drops, items, walls, enemies, clock and player
+RESULT 44 passed; 0 failed
