@@ -12,13 +12,13 @@ namespace EclipseSurvival
             var loaded=Resources.Load<Sprite>("Generated/"+kind);
             if(loaded){cache[kind]=loaded;return loaded;}
             var texture=Texture(kind);
-            var sprite=Sprite.Create(texture,new Rect(0,0,texture.width,texture.height),new Vector2(.5f,kind=="grass"||kind=="road"||kind=="floor"?.5f:0),24);
+            var sprite=Sprite.Create(texture,new Rect(0,0,texture.width,texture.height),new Vector2(.5f,kind=="grass"||kind=="road"||kind=="floor"||kind=="crowbar"||kind=="pistol"?.5f:0),24);
             cache[kind]=sprite;return sprite;
         }
         public static Texture2D Texture(string kind)
         {
-            int w=kind=="house"?128:kind=="bandit"||kind=="scavenger"?24:48;
-            int h=kind=="house"?112:kind=="bandit"||kind=="scavenger"?48:kind=="tree"?72:24;
+            int w=kind=="house"?128:kind=="bandit"||kind=="scavenger"?24:kind=="crowbar"?20:kind=="pistol"?14:48;
+            int h=kind=="house"?112:kind=="bandit"||kind=="scavenger"?48:kind=="tree"?72:kind=="crowbar"?5:kind=="pistol"?9:24;
             var t=new Texture2D(w,h,TextureFormat.RGBA32,false){filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp,name=kind};
             Color32[] p=new Color32[w*h];
             Color C(string hex){ColorUtility.TryParseHtmlString(hex,out var c);return c;}
@@ -56,6 +56,10 @@ namespace EclipseSurvival
             }
             else if(kind=="car")
             {Poly(C("#536f69"),new Vector2(0,10),new Vector2(31,0),new Vector2(48,12),new Vector2(14,24));Rect(14,11,21,8,C("#adc0ae"));Rect(4,2,8,6,C("#182e28"));Rect(36,10,8,6,C("#182e28"));}
+            else if(kind=="crowbar")
+            {Rect(2,2,16,2,C("#9aa0a4"));Rect(0,1,3,3,C("#b4babe"));Rect(17,1,3,3,C("#6d7378"));Rect(5,2,9,1,C("#c9cfd2"));}
+            else if(kind=="pistol")
+            {Rect(1,4,11,3,C("#2a2d30"));Rect(2,0,4,5,C("#3b3532"));Rect(3,6,7,1,C("#5b6064"));Rect(11,5,3,2,C("#1d2023"));}
             else if(kind=="shadow")
             {for(int y=0;y<h;y++)for(int x=0;x<w;x++)if(Mathf.Pow((x-24)/24f,2)+Mathf.Pow((y-12)/8f,2)<1)p[y*w+x]=C("#0b191277");}
             else

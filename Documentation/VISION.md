@@ -55,6 +55,10 @@ A third layer could sit beneath them: weaker corrupted creatures that make up th
 
 Note: Berserk is someone else's creation. For a personal project that is fine. If the game is ever shown publicly, the Apostles should become original designs and names.
 
+## Art direction (decided Oct 10)
+
+Our own assets, made as a mixture of the reference screenshots: the warm, 1970s radio-station isometric look, Project Zomboid's readable isometric survival view, and State of Decay's fog and mood. The mixture is refined until it becomes this game's own style. The map, the look and the asset pipeline are Milestone 3 work; gameplay systems do not wait for final art.
+
 ## What this changes in the plan
 
 - **Map.** A 10 by 10 street cannot carry this vision. A small believable town is needed before the community and the story work.

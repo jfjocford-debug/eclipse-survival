@@ -29,6 +29,16 @@ namespace EclipseSurvival.Core
         Winded,
         /// <summary>The player's posture changed. Value is the new <see cref="Posture"/>.</summary>
         Posture,
+        /// <summary>The player was wounded. Value is the <see cref="BodyPart"/>, Amount the <see cref="InjuryKind"/>.</summary>
+        Injured,
+        /// <summary>The player treated a wound. Value is the body part.</summary>
+        Treated,
+        /// <summary>The Apostle struck the safehouse walls. Amount is the integrity left.</summary>
+        WallHit,
+        /// <summary>An enemy noticed the player. Subject is the enemy id.</summary>
+        Noticed,
+        /// <summary>An enemy gave up searching. Subject is the enemy id.</summary>
+        LostTrack,
         /// <summary>Sentinel: the number of kinds. Keep last.</summary>
         Count
     }

@@ -19,8 +19,10 @@ namespace EclipseSurvival
         Rigidbody2D playerBody;
         Animator animator;
         Sprite heroSprite;
-        SpriteRenderer targetRing;
+        SpriteRenderer targetRing, heldWeapon;
         VisibilityRing visibility;
+        readonly Dictionary<int,ViewCone> cones=new Dictionary<int,ViewCone>();
+        readonly Dictionary<int,TextMesh> alerts=new Dictionary<int,TextMesh>();
         Material spriteMaterial;
         int epoch;
         public Transform PlayerTransform=>player?player.transform:null;
@@ -43,6 +45,7 @@ namespace EclipseSurvival
             if(game.config.locomotion){animator=player.GetComponent<Animator>();if(!animator)animator=player.gameObject.AddComponent<Animator>();animator.runtimeAnimatorController=game.config.locomotion;}
             targetRing=Sprite("Soft aim target",PixelArt.Get("shadow"),actors);targetRing.color=new Color(1,.8f,.25f,.6f);
             visibility=new GameObject("Visibility ring").AddComponent<VisibilityRing>();visibility.transform.SetParent(actors,false);visibility.Initialize(spriteMaterial);
+            heldWeapon=Sprite("Held weapon",PixelArt.Get("crowbar"),actors);heldWeapon.gameObject.SetActive(false);
             RefreshArea(true);
         }
         Tile MakeTile(string name){var t=ScriptableObject.CreateInstance<Tile>();t.sprite=PixelArt.Get(name);t.colliderType=Tile.ColliderType.None;return t;}
@@ -62,6 +65,8 @@ namespace EclipseSurvival
             foreach(Transform child in scenery){child.gameObject.SetActive(false);Destroy(child.gameObject);}
             foreach(var r in enemyViews.Values)Destroy(r.gameObject);enemyViews.Clear();
             foreach(var r in lootViews.Values)Destroy(r.gameObject);lootViews.Clear();walls.Clear();ground.ClearAllTiles();
+            foreach(var c in cones.Values)Destroy(c.gameObject);cones.Clear();
+            foreach(var a in alerts.Values)Destroy(a.gameObject);alerts.Clear();
             int side=area=="street"?10:6;
             for(int y=0;y<side;y++)for(int x=0;x<side;x++)
             {var tile=area!="street"?floor:((y>=3&&y<5)||x==5)?road:grass;ground.SetTile(new Vector3Int(x,y,0),tile);}
@@ -74,8 +79,14 @@ namespace EclipseSurvival
                     AddWall(b.Position,b.Width,b.Height);
                     Label(b.Name,Iso.World(b.Door)+Vector3.down*.23f,scenery);
                 }
-                V2[] props={new V2(.25f,.5f),new V2(9.2f,1.2f),new V2(.3f,4.8f),new V2(9.3f,9.2f),new V2(2.2f,4.15f),new V2(7.6f,3.5f),new V2(5.5f,8.5f),new V2(3.2f,2.7f),new V2(.8f,7.85f)};
-                for(int i=0;i<props.Length;i++){var r=Sprite("Prop "+i,PixelArt.Get(i<4?"tree":i<7?"car":"crate"),scenery);r.transform.position=Iso.World(props[i]);r.sortingOrder=Iso.Sort(props[i]);if(i<4)SetHeight(r,2.3f);}
+                foreach(var prop in Simulation.Props)
+                {
+                    string art=prop.Kind==PropKind.Tree?"tree":prop.Kind==PropKind.Car?"car":"crate";
+                    var r=Sprite("Prop "+prop.Kind,PixelArt.Get(art),scenery);
+                    r.transform.position=Iso.World(prop.Position);r.sortingOrder=Iso.Sort(prop.Position);
+                    if(prop.Kind==PropKind.Tree)SetHeight(r,2.3f);else r.transform.localScale=Vector3.one*(prop.Kind==PropKind.Car?.62f:.4f);
+                }
+                Label("BACK WINDOW",Iso.World(Simulation.RearExit)+Vector3.up*.3f,scenery);
             }
             else
             {
@@ -83,7 +94,12 @@ namespace EclipseSurvival
                 Label(area.ToUpperInvariant(),Iso.World(new V2(3,0))+Vector3.up*.6f,scenery);
                 Label("EXIT",Iso.World(new V2(3,5.5f)),scenery);
                 var bench=Sprite("Workbench",PixelArt.Get("crate"),scenery);bench.transform.position=Iso.World(new V2(3,.7f));bench.sortingOrder=400;bench.transform.localScale=new Vector3(2,1,1);
-                if(area=="shelter")Label("STRENGTHEN WALLS · 1 TOOL EACH",Iso.World(new V2(3,.5f))+Vector3.up*.5f,scenery);
+                if(area=="shelter")
+                {
+                    Label("STRENGTHEN WALLS · 1 TOOL EACH",Iso.World(new V2(3,.5f))+Vector3.up*.5f,scenery);
+                    var window=Sprite("Back window",PixelArt.Get("crate"),scenery);window.transform.position=Iso.World(Simulation.RearWindow);window.sortingOrder=400;window.transform.localScale=new Vector3(1.2f,.7f,1);window.color=new Color(.55f,.75f,.9f);
+                    Label("BACK WINDOW · QUIET EXIT",Iso.World(Simulation.RearWindow)+Vector3.up*.55f,scenery);
+                }
             }
             Physics2D.SyncTransforms();
         }
@@ -112,8 +128,16 @@ namespace EclipseSurvival
             if(!player.sprite){player.sprite=heroSprite;Debug.LogWarning("Player sprite was cleared by the animator; restored.");}
             playerBody.position=Iso.World(p.Position);player.sortingOrder=Depth.ActorOrder(p.Position,area=="street");
             float h=p.Stance==Stance.Crawl?.8f:p.Stance==Stance.Crouch?1.3f:1.95f;SetHeight(player,h);
-            if(p.Posture==Posture.Stand)visibility.Hide();
-            else visibility.Show(p.Position,s.Data.Player.VisibilityOf(p.Stance)+(p.Noise>0f?s.Data.Player.NoiseDetectBonus:0f));
+            if(area!="street")visibility.Hide();
+            else visibility.Show(p.Position,Simulation.DetectionRadius(s));
+            // The weapon in your hands, so you can always see whether you are armed.
+            bool armed=s.Equipped!=Weapon.Fists;heldWeapon.gameObject.SetActive(armed);
+            if(armed)
+            {
+                heldWeapon.sprite=PixelArt.Get(s.Equipped==Weapon.Pistol?"pistol":"crowbar");
+                heldWeapon.transform.position=Iso.World(p.Position)+Iso.World(p.Face)*.28f+Vector3.up*h*.42f;
+                heldWeapon.flipX=player.flipX;heldWeapon.sortingOrder=player.sortingOrder+1;
+            }
             player.flipX=p.Face.X-p.Face.Y<0;player.color=p.Invulnerable>.2f?new Color(1,.5f,.35f):Color.white;
             if(animator){Vector2 face=Iso.World(p.Face);animator.SetFloat("MoveX",face.x);animator.SetFloat("MoveY",face.y);animator.SetFloat("Speed",p.Moving?1:0);}
             foreach(var existing in enemyViews.Values)existing.gameObject.SetActive(false);
@@ -127,6 +151,7 @@ namespace EclipseSurvival
                     r=Actor(e.Kind.ToString(),prefab,art?art:PixelArt.Get(e.Kind==EnemyKind.Scavenger?"scavenger":"bandit"));enemyViews[e.Id]=r;SetHeight(r,e.Kind==EnemyKind.Apostle?2.9f:1.6f);
                 }
                 r.gameObject.SetActive(visible);r.transform.position=Iso.World(e.Position);r.sortingOrder=Depth.ActorOrder(e.Position,area=="street");r.color=e.Flash>0?new Color(1,.3f,.2f):Color.white;
+                ShowAwareness(s,e,visible);
             }
             foreach(var l in s.Loot)
             {
@@ -136,6 +161,30 @@ namespace EclipseSurvival
             }
             var target=Simulation.AimTarget(s);targetRing.gameObject.SetActive(target!=null);
             if(target!=null){targetRing.transform.position=Iso.World(target.Position);targetRing.sortingOrder=Iso.Sort(target.Position)-1;}
+        }
+        // What each enemy is looking at, and how much it has noticed: the cone on the ground, and a question or exclamation mark overhead.
+        void ShowAwareness(GameState s,Enemy e,bool visible)
+        {
+            if(!cones.TryGetValue(e.Id,out var cone)){cone=new GameObject("View cone "+e.Id).AddComponent<ViewCone>();cone.transform.SetParent(actors,false);cone.Initialize(spriteMaterial);cones[e.Id]=cone;}
+            if(!alerts.TryGetValue(e.Id,out var mark))
+            {
+                var go=new GameObject("Alert "+e.Id);go.transform.SetParent(actors,false);mark=go.AddComponent<TextMesh>();
+                mark.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");mark.GetComponent<MeshRenderer>().sharedMaterial=mark.font.material;
+                mark.fontSize=64;mark.characterSize=.09f;mark.anchor=TextAnchor.MiddleCenter;mark.alignment=TextAlignment.Center;mark.GetComponent<MeshRenderer>().sortingOrder=4200;alerts[e.Id]=mark;
+            }
+            bool hunting=e.State==AiState.Chase||e.State==AiState.Attack,searching=e.State==AiState.Search,wary=e.Awareness>0f&&!hunting;
+            bool near=V2.Distance(e.Position,s.Player.Position)<14f;
+            if(!visible||!near||e.State==AiState.Flee){cone.Hide();mark.gameObject.SetActive(false);return;}
+            var def=s.Data.EnemyOf(e.Kind);float half=def.ViewHalfAngle>0f?def.ViewHalfAngle:65f;
+            Color tone=hunting?new Color(1f,.3f,.2f,.5f):searching?new Color(1f,.62f,.2f,.42f):wary?new Color(1f,.82f,.3f,.38f):new Color(1f,.92f,.6f,.2f);
+            if(hunting)cone.Hide();else cone.Show(e.Position,e.Face,half,Simulation.DetectionRadius(s,e.Kind),tone);
+            mark.gameObject.SetActive(hunting||searching||wary);
+            if(mark.gameObject.activeSelf)
+            {
+                mark.text=hunting?"!":"?";mark.color=hunting?new Color(1f,.3f,.2f):searching?new Color(1f,.62f,.2f):new Color(1f,.9f,.4f);
+                mark.transform.position=Iso.World(e.Position)+Vector3.up*(e.Kind==EnemyKind.Apostle?3.2f:1.95f);
+                mark.transform.localScale=Vector3.one*(hunting||searching?1.2f:.6f+.6f*e.Awareness);
+            }
         }
         void OnDestroy(){if(grass)Destroy(grass);if(road)Destroy(road);if(floor)Destroy(floor);}
     }

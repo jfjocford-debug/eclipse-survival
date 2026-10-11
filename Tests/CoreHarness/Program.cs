@@ -56,6 +56,15 @@ internal static class Program
         Test("Validation names every kind of broken data, and a broken set cannot start a game", DataValidation);
         Test("The Eclipse profile in force follows the cycle: spawns, length, exposure and wall pressure", EclipseProfiles);
         Test("Editing data changes behavior: damage, drops, items, walls, enemies, clock and player", DataDrivesBehavior);
+        Test("Enemies see only in front of them, notice gradually, and close sense and point-blank override the cone", SightAndAwareness);
+        Test("Cars, crates and buildings block sight; grass, stillness and a low posture shrink how far you are seen", CoverAndConcealment);
+        Test("A pursuer goes to the last known position, searches, and gives up; it never homes in on the true position", LosingAPursuer);
+        Test("Noise draws enemies to its source without line of sight", HearingNoise);
+        Test("The Apostle at the door cannot see out the back; leaving by the front is noticed at once; walls keep falling while you are away", SneakingPastTheApostle);
+        Test("Wounds are recorded with a body part, can be treated, and bruises fade at dawn", InjuriesAndTreatment);
+        Test("The safehouse reports what is outside by sound, and the walls announce each blow", BaseWatching);
+        Test("Items describe themselves, the equipped weapon is queryable, and the menu can equip, unequip and use", ItemsAndEquipment);
+        Test("The stealth status the HUD shows follows hidden, exposed, noticed, searching and hunted", StealthStatus);
         Console.WriteLine("RESULT " + passed + " passed; " + failed + " failed");
         return failed == 0 ? 0 : 1;
     }
@@ -427,14 +436,15 @@ internal static class Program
             GameState e = Playing(2); e.Enemies.Clear(); e.Player.Position = new V2(4f, 4f); Simulation.Step(e, .1f, new V2(tilt, 0f));
             Near(e.Player.Position.X - 4f, (tilt <= .4f ? .95f : tilt < .9f ? 1.45f : 2.45f) * .1f);
         }
-        // What enemies notice: a still or walking player at 1.4, a jogger at 2.25, a crouched player at .95, a prone one at .65.
+        // What enemies notice: a walker at 1.4 (a still player 20% less), a jogger at 2.25, a crouched player at .95, a prone one at .65.
         foreach (object[] c in new[] {
-            new object[] { Posture.Stand, 0f, 1.3f, true }, new object[] { Posture.Stand, 0f, 1.6f, false }, new object[] { Posture.Stand, .7f, 1.9f, true },
-            new object[] { Posture.Stand, .3f, 1.9f, false }, new object[] { Posture.Crouch, .5f, 1.2f, false }, new object[] { Posture.Crouch, 0f, .8f, true },
-            new object[] { Posture.Prone, 0f, .8f, false }, new object[] { Posture.Prone, 0f, .55f, true } })
+            new object[] { Posture.Stand, 0f, 1.05f, true }, new object[] { Posture.Stand, 0f, 1.2f, false }, new object[] { Posture.Stand, .7f, 1.9f, true },
+            new object[] { Posture.Stand, .3f, 1.9f, false }, new object[] { Posture.Crouch, .5f, 1.2f, false }, new object[] { Posture.Crouch, 0f, .7f, true },
+            new object[] { Posture.Prone, 0f, .8f, false }, new object[] { Posture.Prone, 0f, .51f, true } })
         {
             GameState s = Playing(2); s.Player.Position = new V2(3.8f, 4f); s.Player.Posture = (Posture)c[0];
             Enemy en = OneEnemy(s, EnemyKind.Bandit, 3.8f + (float)c[2] + ((float)c[1] > 0f ? .07f : 0f), 4f);
+            en.Face = new V2(-1f, 0f); en.Awareness = .99f;   // facing the player and already wary: the range alone decides
             Simulation.Step(s, .05f, new V2((float)c[1], 0f));
             Equal(en.State == AiState.Chase, (bool)c[3], "posture " + c[0] + " tilt " + c[1] + " distance " + c[2]);
         }
@@ -540,13 +550,15 @@ internal static class Program
 
     private static void AiStateEvents()
     {
-        GameState s = Playing(3); s.Player.Position = new V2(3.8f, 4f); Enemy e = OneEnemy(s, EnemyKind.Bandit, 5.1f, 4f);
+        GameState s = Playing(3); s.Player.Position = new V2(3.8f, 4f); Enemy e = OneEnemy(s, EnemyKind.Bandit, 4.6f, 4f);
+        e.Face = new V2(-1f, 0f); e.Awareness = .99f;
         var bus = new EventBus(); var states = new List<GameEvent>(); bus.Subscribe(GameEventKind.EnemyState, states.Add); bus.Pump(s);
         Simulation.Step(s, .05f); bus.Pump(s);
         Equal(states.Count, 1); Equal(states[0].Subject, e.Id); Equal(states[0].Value, (int)AiState.Chase); Equal(states[0].Source, EventSource.Bandit);
         Simulation.Step(s, .05f); bus.Pump(s); Equal(states.Count, 1);                // still chasing: no new announcement
-        s.Player.Position = new V2(1f, 9f); Simulation.Step(s, .05f); bus.Pump(s);   // far away: it gives up
-        Equal(states.Count, 2); Equal(states[1].Value, (int)AiState.Patrol);
+        s.Player.Position = new V2(1f, 9f);                                          // far away and out of sight: it goes to where it last saw you,
+        for (int i = 0; i < 400 && states.Count < 3; i++) { Simulation.Step(s, .05f); bus.Pump(s); }   // searches there, then gives up
+        Equal(states.Count, 3); Equal(states[1].Value, (int)AiState.Search); Equal(states[2].Value, (int)AiState.Patrol);
     }
 
     private static void EclipseEventSequence()
@@ -557,7 +569,9 @@ internal static class Program
         for (int i = 0; i < 4810; i++) { Simulation.Step(s, .05f); bus.Pump(s); if (s.Mode != RunMode.Playing) break; }
         Equal(s.Mode, RunMode.Survived);
         var expected = new List<GameEventKind> { GameEventKind.Start, GameEventKind.Warning, GameEventKind.Eclipse, GameEventKind.Siege, GameEventKind.Cracking, GameEventKind.EclipseEnded };
-        Equal(string.Join(",", KindsOf(log)), string.Join(",", expected));
+        var order = KindsOf(log); order.RemoveAll(k => k == GameEventKind.WallHit);   // blows on the walls fall between the others
+        Equal(string.Join(",", order), string.Join(",", expected));
+        True(IndexOf(log, GameEventKind.WallHit) > IndexOf(log, GameEventKind.Siege));
         Equal(log[IndexOf(log, GameEventKind.Siege)].Source, EventSource.Apostle);
         True(log[IndexOf(log, GameEventKind.Cracking)].Amount <= Simulation.WallCapacity(s) * s.Data.Safehouse.WarnFraction + .001f);
         // No tools: the breach names the Apostle, and the exposure damage that follows does too.
@@ -571,6 +585,203 @@ internal static class Program
         // A new day is announced separately from the end of the Eclipse.
         GameState d = Playing(5, true); d.Mode = RunMode.Survived; Simulation.NextCycle(d);
         Equal(d.Events[d.Events.Count - 1].Kind, GameEventKind.DayStarted);
+    }
+
+    private static void Face(Enemy e, float x, float y) { e.Face = new V2(x, y); }
+
+    private static void SightAndAwareness()
+    {
+        GameState s = Playing(8); s.Player.Position = new V2(4f, 4f); s.Player.Posture = Posture.Stand;
+        // Behind it, at walking range: not seen. In front: seen, but suspicion builds over time, not at once.
+        Enemy behind = OneEnemy(s, EnemyKind.Bandit, 5.2f, 4f); Face(behind, 1f, 0f);
+        for (int i = 0; i < 4; i++) { Simulation.Step(s, .05f, new V2(.3f, 0f)); s.Player.Position = new V2(4f, 4f); }
+        Near(behind.Awareness, 0f); Equal(behind.State, AiState.Patrol);
+        GameState t = Playing(8); t.Player.Position = new V2(4f, 4f);
+        Enemy front = OneEnemy(t, EnemyKind.Bandit, 5.2f, 4f); Face(front, -1f, 0f); front.Target = front.Position;
+        Simulation.Step(t, .05f, new V2(.3f, 0f)); True(front.Awareness > 0f && front.Awareness < 1f); Equal(front.State, AiState.Patrol);
+        // A watched enemy freezes to look rather than carrying on.
+        V2 held = front.Position; Simulation.Step(t, .05f, new V2(.3f, 0f)); Near(front.Position.X, held.X, .0001f);
+        int steps = 0; while (front.State == AiState.Patrol && steps++ < 80) Simulation.Step(t, .05f, new V2(.3f, 0f));
+        Equal(front.State, AiState.Chase); True(steps > 2 && steps < 40);
+        // Close behind it, inside close sense, it notices from any direction; point-blank is at once.
+        GameState u = Playing(8); u.Player.Position = new V2(4f, 4f);
+        Enemy close = OneEnemy(u, EnemyKind.Bandit, 4.8f, 4f); Face(close, 1f, 0f); Simulation.Step(u, .05f); True(close.Awareness > 0f);
+        GameState v = Playing(8); v.Player.Position = new V2(4f, 4f);
+        Enemy blank = OneEnemy(v, EnemyKind.Bandit, 4.5f, 4f); Face(blank, 1f, 0f); Simulation.Step(v, .05f); Equal(blank.State, AiState.Chase);
+        // Suspicion drains once the player is out of sight.
+        GameState w = Playing(8); w.Player.Position = new V2(4f, 4f);
+        Enemy wary = OneEnemy(w, EnemyKind.Bandit, 5.2f, 4f); Face(wary, 1f, 0f); wary.Awareness = .8f;
+        for (int i = 0; i < 40; i++) Simulation.Step(w, .05f); Near(wary.Awareness, 0f);
+        // The scavenger flees when it notices an unarmed-of-tools player; the chase decision is unchanged.
+        GameState x = Playing(8); x.Player.Position = new V2(4f, 4f); x.Inventory[(int)Item.Tools] = 0;
+        Enemy thief = OneEnemy(x, EnemyKind.Scavenger, 4.4f, 4f); Simulation.Step(x, .05f); Equal(thief.State, AiState.Flee);
+    }
+
+    private static void CoverAndConcealment()
+    {
+        // A car between the two blocks sight: the enemy never notices, then does once the player steps out.
+        Prop car = Simulation.Props[4]; Equal(car.Kind, PropKind.Car);
+        GameState s = Playing(9); s.Player.Position = new V2(car.Position.X, car.Position.Y + car.HalfHeight + .3f); s.Player.Posture = Posture.Crouch;
+        Enemy e = OneEnemy(s, EnemyKind.Bandit, car.Position.X, car.Position.Y - car.HalfHeight - .9f); Face(e, 0f, 1f); e.Target = e.Position;
+        True(!Simulation.LineClear(e.Position, s.Player.Position));
+        for (int i = 0; i < 60; i++) Simulation.Step(s, .05f); Near(e.Awareness, 0f); Equal(s.Player.Position.X, car.Position.X, "stayed put");
+        // Props are solid: the player cannot walk through a car.
+        True(!Simulation.CanWalk(car.Position, "street"));
+        // Walking at the edge of a bandit's range: seen on the road, unseen when low in the grass beside it, and the ring shrinks.
+        GameState road = Playing(9); road.Player.Position = new V2(5.5f, 4f); road.Player.Stance = Stance.Walk;
+        GameState grass = Playing(9); grass.Player.Position = new V2(4.2f, 1.4f); grass.Player.Posture = Posture.Crouch; grass.Player.Stance = Stance.Crouch; grass.Player.Moving = true;
+        road.Player.Moving = true;
+        float onRoad = Simulation.DetectionRadius(road); float inGrass = Simulation.DetectionRadius(grass);
+        Near(onRoad, 1.4f); Near(inGrass, .95f * .65f); True(Simulation.InCover(grass) && !Simulation.InCover(road));
+        // Standing still helps, and noise hurts.
+        road.Player.Moving = false; Near(Simulation.DetectionRadius(road), 1.4f * .8f);
+        road.Player.Noise = 1f; Near(Simulation.DetectionRadius(road), 1.4f * .8f + 2f);
+        // The Apostle's range follows the same rules, scaled to its larger base.
+        GameState a = Playing(9); a.Player.Position = new V2(5.5f, 4f); a.Player.Moving = true; a.Player.Stance = Stance.Walk;
+        Near(Simulation.DetectionRadius(a, EnemyKind.Apostle), 4.8f);
+        a.Player.Stance = Stance.Crouch; Near(Simulation.DetectionRadius(a, EnemyKind.Apostle), 4.8f * .95f / 1.4f);
+    }
+
+    private static void LosingAPursuer()
+    {
+        GameState s = Playing(10); s.Player.Position = new V2(4f, 4f);
+        Enemy e = OneEnemy(s, EnemyKind.Bandit, 5f, 4f); Face(e, -1f, 0f); e.Awareness = .99f;
+        Simulation.Step(s, .05f); Equal(e.State, AiState.Chase);
+        // The player vanishes behind a building; the bandit goes to the last place it saw them, not to where they are.
+        V2 lastSeen = e.LastKnown; s.Player.Position = new V2(1.65f, 1.5f);   // inside the safehouse footprint: not a place to stand, but out of reach and sight
+        s.Player.Position = new V2(9f, 9f); float closest = float.MaxValue; bool searched = false, gaveUp = false;
+        for (int i = 0; i < 600; i++)
+        {
+            Simulation.Step(s, .05f);
+            closest = Math.Min(closest, V2.Distance(e.Position, s.Player.Position));
+            if (e.State == AiState.Search) searched = true;
+            if (searched && e.State == AiState.Patrol) { gaveUp = true; break; }
+        }
+        True(searched && gaveUp, "it searched and then gave up"); True(closest > 3f, "it never homed in on the hidden player: " + closest);
+        True(!e.HasLastKnown); Near(e.Awareness, 0f);
+        True(lastSeen.X > 3f && lastSeen.X < 5.2f);
+        // Search lasts the data's time: the Apostle looks longer than a bandit.
+        True(s.Data.EnemyOf(EnemyKind.Apostle).SearchSeconds > s.Data.EnemyOf(EnemyKind.Bandit).SearchSeconds);
+    }
+
+    private static void HearingNoise()
+    {
+        GameState s = Playing(11); s.Player.Position = new V2(4f, 1.2f); s.Equipped = Weapon.Pistol; s.Inventory[(int)Item.Pistol] = 1; s.Inventory[(int)Item.Ammo] = 5;
+        Enemy e = OneEnemy(s, EnemyKind.Bandit, 4f, 6f); Face(e, 0f, 1f);                // far, facing away, with the safehouse row between
+        Simulation.Step(s, .05f); Equal(e.State, AiState.Patrol);
+        s.Player.Face = new V2(0f, 1f); True(Simulation.Attack(s));                      // a shot carries 8 tiles without any line of sight
+        Simulation.Step(s, .05f); Equal(e.State, AiState.Search); True(e.HasLastKnown); True(V2.Distance(e.LastKnown, s.Player.Position) < 1f);
+        // Quiet movement is not heard from the same distance.
+        GameState q = Playing(11); q.Player.Position = new V2(4f, 1.2f);
+        Enemy f = OneEnemy(q, EnemyKind.Bandit, 4f, 6f); Face(f, 0f, 1f); q.Player.Posture = Posture.Crouch;
+        for (int i = 0; i < 40; i++) Simulation.Step(q, .05f, new V2(.3f, 0f)); Equal(f.State, AiState.Patrol);
+    }
+
+    private static void WalkTo(GameState s, V2 goal, float tilt)
+    {
+        for (int i = 0; i < 600 && V2.Distance(s.Player.Position, goal) > .12f; i++)
+        {
+            V2 way = (goal - s.Player.Position).Normalized; Simulation.Step(s, .05f, way * tilt);
+        }
+    }
+
+    private static void SneakingPastTheApostle()
+    {
+        GameState s = SiegeOf(1); Run(s, 8f); True(s.SiegeStarted);
+        Enemy apostle = s.Enemies[0]; Equal(apostle.Kind, EnemyKind.Apostle);
+        True(Simulation.Watch(s).UnderAttack); True(Simulation.Watch(s).AtDoor);
+        // Out the back window: you land low, on the north side, with the whole safehouse between you and it.
+        s.Player.Position = Simulation.RearWindow; s.InteractCooldown = 0f; Simulation.Interact(s);
+        Equal(s.Area, "street"); Equal(s.Player.Posture, Posture.Crouch); True(V2.Distance(s.Player.Position, Simulation.RearExit) < .01f);
+        float before = s.WallIntegrity; Run(s, 4f);
+        Equal(apostle.State, AiState.Patrol); Near(apostle.Awareness, 0f); True(s.WallIntegrity < before, "the walls keep falling while the player is away");
+        // Creep out through the east alley and away along the road, crouched: it never notices.
+        float worst = 0f; bool chased = false;
+        foreach (V2 goal in new[] { new V2(3f, .36f), new V2(3f, 3.4f), new V2(6f, 3.4f) })
+        {
+            for (int i = 0; i < 600 && V2.Distance(s.Player.Position, goal) > .12f; i++)
+            {
+                Simulation.Step(s, .05f, (goal - s.Player.Position).Normalized * .3f);
+                worst = Math.Max(worst, apostle.Awareness); chased |= apostle.State == AiState.Chase || apostle.State == AiState.Search;
+            }
+        }
+        True(!chased, "it did not react"); True(worst < .5f, "awareness stayed low: " + worst);
+        // Make a noise from there and it comes to look, leaving the walls alone.
+        s.Equipped = Weapon.Pistol; s.Inventory[(int)Item.Pistol] = 1; s.Inventory[(int)Item.Ammo] = 4; s.Player.Face = new V2(1f, 0f); s.Player.Posture = Posture.Stand;
+        Simulation.Attack(s); Simulation.Step(s, .05f); Equal(apostle.State, AiState.Search);
+        float held = s.WallIntegrity; Run(s, 2f); Near(s.WallIntegrity, held, .0001f);
+        // The front door is another matter: it is at your shoulder and sees you at once.
+        GameState f = SiegeOf(1); Run(f, 8f); Enemy guard = f.Enemies[0];
+        f.Player.Position = new V2(3f, 5.3f); f.InteractCooldown = 0f; Simulation.Interact(f);   // leave the building by the front
+        Equal(f.Area, "street"); Simulation.Step(f, .05f); True(guard.State == AiState.Chase || guard.State == AiState.Attack);
+    }
+
+    private static void InjuriesAndTreatment()
+    {
+        GameState s = Playing(12); s.Enemies.Clear(); Equal(s.Injuries.Count, 0);
+        Enemy e = OneEnemy(s, EnemyKind.Bandit, 4.1f, 4f); s.Player.Position = new V2(4f, 4f); Face(e, -1f, 0f); e.Awareness = 1f; e.State = AiState.Chase; e.LastKnown = s.Player.Position; e.HasLastKnown = true;
+        var bus = new EventBus(); var heard = new List<GameEvent>(); bus.Subscribe(GameEventKind.Injured, heard.Add);
+        for (int i = 0; i < 80 && s.Injuries.Count == 0; i++) Simulation.Step(s, .05f);
+        Equal(s.Injuries.Count, 1); bus.Pump(s); Equal(heard.Count, 1);
+        Equal(s.Injuries[0].Source, EventSource.Bandit); Equal(s.Injuries[0].Kind, InjuryKind.Cut); Equal(heard[0].Value, (int)s.Injuries[0].Part);
+        True(Simulation.PartName(s.Injuries[0].Part).Length > 3);
+        // Medicine heals and treats the worst wound; it works at full health only if there is a wound.
+        s.Injuries.Add(new Injury { Part = BodyPart.LeftLeg, Kind = InjuryKind.Deep, Source = EventSource.Apostle });
+        s.Player.Health = 50f; s.Inventory[(int)Item.Medicine] = 2; Simulation.UseItem(s, Item.Medicine);
+        Equal(s.Injuries.Count, 1); Equal(s.Injuries[0].Kind, InjuryKind.Cut); Near(s.Player.Health, 90f); Equal(s.Inventory[(int)Item.Medicine], 1);
+        True(s.Message.Contains("left leg"));
+        s.Player.Health = 100f; Simulation.UseItem(s, Item.Medicine); Equal(s.Injuries.Count, 0); Equal(s.Inventory[(int)Item.Medicine], 0);
+        s.Inventory[(int)Item.Medicine] = 1; Simulation.UseItem(s, Item.Medicine); Equal(s.Inventory[(int)Item.Medicine], 1);      // nothing to treat: nothing spent
+        // Bruises fade by dawn; cuts stay. Wounds age.
+        s.Injuries.Add(new Injury { Part = BodyPart.Torso, Kind = InjuryKind.Bruise }); s.Injuries.Add(new Injury { Part = BodyPart.Head, Kind = InjuryKind.Cut });
+        Simulation.Step(s, .1f); True(s.Injuries[0].Age > 0f);
+        s.Mode = RunMode.Survived; Simulation.NextCycle(s); Equal(s.Injuries.Count, 1); Equal(s.Injuries[0].Kind, InjuryKind.Cut);
+        // The safehouse protects: no wound is recorded while safe.
+        GameState safe = SiegeOf(3); safe.Player.Health = 100f; Run(safe, 20f); Equal(safe.Injuries.Count, 0);
+    }
+
+    private static void BaseWatching()
+    {
+        GameState s = SiegeOf(3); Equal(s.Enemies.Count, 1);
+        BaseWatch far = Simulation.Watch(s); True(far.Active); True(far.Distance > 6f); True(!far.AtDoor); True(!far.UnderAttack);
+        var bus = new EventBus(); var hits = new List<GameEvent>(); bus.Subscribe(GameEventKind.WallHit, hits.Add);
+        float lastDistance = far.Distance; bool nearer = true;
+        for (int i = 0; i < 300; i++)
+        {
+            Simulation.Step(s, .05f); bus.Pump(s);
+            BaseWatch w = Simulation.Watch(s); if (w.Distance > lastDistance + .05f) nearer = false; lastDistance = w.Distance;
+        }
+        True(nearer, "the sound only gets closer"); BaseWatch at = Simulation.Watch(s); True(at.AtDoor && at.UnderAttack);
+        True(hits.Count >= 4); Equal(hits[0].Source, EventSource.Apostle);
+        for (int i = 1; i < hits.Count; i++) True(hits[i].Id > hits[i - 1].Id);
+        True(at.WallFraction > 0f && at.WallFraction < 1f); True(at.Direction.Magnitude > .99f);
+        // Away from the safehouse the watch is silent, but the attack is still reported.
+        s.Area = "clinic"; BaseWatch away = Simulation.Watch(s); True(!away.Active); True(away.UnderAttack);
+    }
+
+    private static void ItemsAndEquipment()
+    {
+        GameState s = Playing(13);
+        True(Simulation.Describe(s, Item.Crowbar).Contains("damage 28")); True(Simulation.Describe(s, Item.Food).Contains("+35 stamina"));
+        True(Simulation.Describe(s, Item.Medicine).Contains("wound")); True(Simulation.Describe(s, Item.Tools).Contains("workbench"));
+        Equal(s.Equipped, Weapon.Fists);
+        s.Inventory[(int)Item.Crowbar] = 1; Simulation.UseItem(s, Item.Crowbar); Equal(s.Equipped, Weapon.Crowbar);
+        Simulation.UseItem(s, Item.Crowbar); Equal(s.Equipped, Weapon.Fists);           // the same action unequips
+        Simulation.UseItem(s, Item.Pistol); Equal(s.Equipped, Weapon.Fists);            // not owned: cannot be equipped
+        Simulation.UseItem(s, Item.Crowbar); Simulation.UseItem(s, Item.Food); Equal(s.Equipped, Weapon.Crowbar);
+    }
+
+    private static void StealthStatus()
+    {
+        GameState s = Playing(14); s.Player.Position = new V2(4f, 4f);
+        Equal(Simulation.StealthOf(s), Stealth.Hidden);
+        Enemy e = OneEnemy(s, EnemyKind.Bandit, 5f, 4f); Face(e, -1f, 0f);
+        Equal(Simulation.StealthOf(s), Stealth.Exposed);                                // it could see you, but has not started to
+        e.Awareness = .3f; Equal(Simulation.StealthOf(s), Stealth.Noticed);
+        e.State = AiState.Search; Equal(Simulation.StealthOf(s), Stealth.Searching);
+        e.State = AiState.Chase; Equal(Simulation.StealthOf(s), Stealth.Hunted);
+        e.State = AiState.Patrol; e.Awareness = 0f; Face(e, 1f, 0f); Equal(Simulation.StealthOf(s), Stealth.Hidden);   // facing away
+        s.Area = "clinic"; e.State = AiState.Chase; Equal(Simulation.StealthOf(s), Stealth.Hidden);                   // indoors, nothing follows
     }
 
     private static void AimRanges()

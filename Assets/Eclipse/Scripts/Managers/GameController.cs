@@ -21,6 +21,8 @@ namespace EclipseSurvival
         public bool IsMobile => Application.isMobilePlatform || (Input!=null && Input.forceTouch);
         public bool IsPortrait => IsMobile && Screen.height>Screen.width;
         public bool Menu {get;private set;}
+        /// <summary>True while the Survivor screen (body and backpack) is open. The simulation does not advance.</summary>
+        public bool PanelOpen {get;private set;}
         public bool Quick {get;set;}
         float accumulator;
         void Awake()
@@ -46,7 +48,7 @@ namespace EclipseSurvival
         public void StartGame(){if(menuScene){launchQuick=Quick;SceneManager.LoadScene("GameScene");}else NewRun();}
         public void NewRun()
         {
-            Input.Clear();accumulator=0;Menu=false;
+            Input.Clear();accumulator=0;Menu=false;PanelOpen=false;
             State=Simulation.Create(unchecked((uint)System.DateTime.UtcNow.Ticks),Quick,GameDataAsset.Load(gameData));
             State.Best=PlayerPrefs.GetInt("EclipseBest",0);
             State.AutoLoot=config.autoLoot;
@@ -57,7 +59,8 @@ namespace EclipseSurvival
         {
             if(State==null)return;
             if(IsPortrait && State.Mode==RunMode.Playing)Pause(true);
-            if(State.Mode!=RunMode.Playing){accumulator=0;return;}
+            if(State.Mode!=RunMode.Playing){accumulator=0;PanelOpen=false;return;}
+            if(PanelOpen){accumulator=0;return;}
             accumulator+=Mathf.Min(Time.unscaledDeltaTime,.1f);
             while(accumulator>=1f/60f)
             {
@@ -72,10 +75,18 @@ namespace EclipseSurvival
         void LateUpdate(){if(State!=null)Bus.Pump(State);}
         public void Pause(bool pause)
         {
-            if(State.Mode==RunMode.Playing&&pause){State.Mode=RunMode.Paused;Input.Clear();}
+            if(State.Mode==RunMode.Playing&&pause){State.Mode=RunMode.Paused;PanelOpen=false;Input.Clear();}
             else if(State.Mode==RunMode.Paused&&!pause&&!IsPortrait)State.Mode=RunMode.Playing;
         }
         public void TogglePause()=>Pause(State.Mode==RunMode.Playing);
+        public void TogglePanel()
+        {
+            if(State==null)return;
+            if(PanelOpen){ClosePanel();return;}
+            if(State.Mode!=RunMode.Playing||IsPortrait||Menu)return;
+            PanelOpen=true;Input.Clear();
+        }
+        public void ClosePanel(){PanelOpen=false;}
         void ApplyAim()
         {
             if(Input.Aim.sqrMagnitude<=.01f)return;

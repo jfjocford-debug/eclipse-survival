@@ -79,6 +79,8 @@ namespace EclipseSurvival.Core
         public float WalkVisibility = 1.4f, JogVisibility = 2.25f, CrouchVisibility = .95f, CrawlVisibility = .65f;
         /// <summary>Extra detection distance while you are making noise.</summary>
         public float NoiseDetectBonus = 2f;
+        /// <summary>Noise carries without a line of sight: this far, plus this much for every second of noise left. A stand-in until sound propagation (Milestone 2).</summary>
+        public float HearBase = 2.5f, HearPerNoise = 1.5f;
         public float RunStaminaDrain = 15f;
         public float RunNoise = .7f;
         public float StaminaRegenMoving = 7f;
@@ -117,8 +119,14 @@ namespace EclipseSurvival.Core
         public string Name = "";
         public float Health;
         public float PatrolSpeed, ChaseSpeed, FleeSpeed;
-        /// <summary>How far away it notices you. Zero means it follows your stance visibility, as humans do.</summary>
+        /// <summary>How far away it notices you when you walk. Zero means it follows your stance visibility, as humans do. Crouching, crawling, running and standing still change it for both.</summary>
         public float DetectRadius;
+        /// <summary>Seconds of clear sight it needs, at the edge of its range, before it commits to the chase. Closer is faster. Zero or less uses 0.6.</summary>
+        public float NoticeSeconds = .6f;
+        /// <summary>Half-width, in degrees, of the cone in front of it in which it sees you. Zero or less uses 65.</summary>
+        public float ViewHalfAngle = 65f;
+        /// <summary>How long it searches around the last place it knew you were before it gives up. Zero or less uses 6.</summary>
+        public float SearchSeconds = 6f;
         /// <summary>It begins an attack when closer than this.</summary>
         public float AttackStartRange;
         /// <summary>The attack lands only if you are still closer than this when the windup ends.</summary>
@@ -331,7 +339,7 @@ namespace EclipseSurvival.Core
             data.Enemies.Add(new EnemyDef { Id = EnemyKind.Scavenger, Name = "Scavenger", Health = 40f, PatrolSpeed = .45f, ChaseSpeed = 1.2f, FleeSpeed = 1.65f,
                 AttackStartRange = .5f, AttackHitRange = .7f, AttackDamage = 11f, AttackWindup = .4f, AttackCooldown = 1.2f, FleeBelowHealth = 40f });
             data.Enemies.Add(new EnemyDef { Id = EnemyKind.Apostle, Name = "Apostle", Health = 260f, PatrolSpeed = .65f, ChaseSpeed = 1.83f, FleeSpeed = .65f,
-                DetectRadius = 4.8f, AttackStartRange = .72f, AttackHitRange = 1f, AttackDamage = 28f, AttackWindup = .75f, AttackCooldown = 1.7f,
+                DetectRadius = 4.8f, NoticeSeconds = .9f, ViewHalfAngle = 50f, SearchSeconds = 10f, AttackStartRange = .72f, AttackHitRange = 1f, AttackDamage = 28f, AttackWindup = .75f, AttackCooldown = 1.7f,
                 DefeatText = "The Apostle falls. Hold out until dawn." });
 
             var eclipse = new EclipseProfile { Name = "The first Eclipse", FromCycle = 1 };

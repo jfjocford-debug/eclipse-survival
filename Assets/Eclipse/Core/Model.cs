@@ -35,8 +35,14 @@ namespace EclipseSurvival.Core
     public enum Item { Crowbar = 0, Pistol = 1, Food = 2, Medicine = 3, Tools = 4, Ammo = 5 }
     public enum Weapon { Fists, Crowbar, Pistol }
     public enum EnemyKind { Bandit, Scavenger, Apostle }
-    public enum AiState { Patrol, Chase, Flee, Attack }
+    /// <summary>Search is appended after the original four so the stored numbers do not change.</summary>
+    public enum AiState { Patrol, Chase, Flee, Attack, Search }
     public enum EffectKind { Hit, Shot, Dodge, Hurt, Loot, Heavy }
+    public enum BodyPart { Head, Torso, LeftArm, RightArm, LeftLeg, RightLeg }
+    public enum InjuryKind { Bruise, Cut, Deep }
+    public enum PropKind { Tree, Car, Crate }
+    /// <summary>How well the player is hidden right now, for the HUD. Ordered from safest to most dangerous.</summary>
+    public enum Stealth { Hidden, Exposed, Noticed, Searching, Hunted }
 
     [Serializable]
     public sealed class Actor
@@ -74,6 +80,50 @@ namespace EclipseSurvival.Core
         public float Flash;
         public float Windup;
         public int Stolen;
+        /// <summary>Which way it looks. Enemies see in a cone in front of them, not all around.</summary>
+        public V2 Face = new V2(0f, 1f);
+        /// <summary>0 to 1. Rises while it can see the player and, at 1, it commits to the chase. Falls when it loses them.</summary>
+        public float Awareness;
+        /// <summary>Where it last saw or heard the player. It goes there, never to the player's true position, once it loses sight.</summary>
+        public V2 LastKnown;
+        public bool HasLastKnown;
+        /// <summary>Seconds of searching left after it reaches the last known position.</summary>
+        public float SearchLeft;
+        public bool Arrived;
+        public float WanderTimer;
+    }
+
+    /// <summary>A wound the player carries. Effects and the fuse are Milestone 2; for now it is recorded, shown and treatable.</summary>
+    [Serializable]
+    public struct Injury
+    {
+        public BodyPart Part;
+        public InjuryKind Kind;
+        public EventSource Source;
+        /// <summary>Seconds since it happened.</summary>
+        public float Age;
+    }
+
+    /// <summary>A solid object on the street that blocks walking and sight, so it works as cover.</summary>
+    [Serializable]
+    public sealed class Prop
+    {
+        public PropKind Kind;
+        public V2 Position;
+        public float HalfWidth;
+        public float HalfHeight;
+    }
+
+    /// <summary>What the player can learn about threats at their safehouse while indoors. Unnamed on purpose: they hear, they do not see.</summary>
+    public struct BaseWatch
+    {
+        public bool Active;
+        public bool AtDoor;
+        /// <summary>The Apostle is at the walls and wearing them down, whether or not the player is inside.</summary>
+        public bool UnderAttack;
+        public float Distance;
+        public V2 Direction;
+        public float WallFraction;
     }
 
     [Serializable]
@@ -135,6 +185,8 @@ namespace EclipseSurvival.Core
         public bool WallWarned;
         public bool SiegeStarted;
         public float SiegeTravel;
+        public float WallHitTimer;
+        public List<Injury> Injuries = new List<Injury>(12);
         public List<Enemy> Enemies = new List<Enemy>(8);
         public List<Loot> Loot = new List<Loot>(16);
         public List<Effect> Effects = new List<Effect>(32);

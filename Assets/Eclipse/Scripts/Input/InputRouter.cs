@@ -37,8 +37,17 @@ namespace EclipseSurvival
         void Update()
         {
             if(!actions || game.State==null)return;
-            if(pause.WasPressedThisFrame())game.TogglePause();
+            if(pause.WasPressedThisFrame()){if(game.PanelOpen)game.ClosePanel();else game.TogglePause();}
+            var keyboard=Keyboard.current;
+            if(keyboard!=null&&(keyboard.tabKey.wasPressedThisFrame||keyboard.iKey.wasPressedThisFrame))game.TogglePanel();
             if(game.State.Mode!=RunMode.Playing||game.IsPortrait){Clear();return;}
+            if(game.PanelOpen)
+            {
+                // The Survivor screen is open and time is stopped: only the quick-use keys still work.
+                Clear();
+                for(int i=0;i<6;i++)if(slots[i].WasPressedThisFrame())game.Use((Item)i);
+                return;
+            }
             smoothed=Stick==Vector2.zero?Vector2.zero:Vector2.Lerp(smoothed,Stick,1-Mathf.Exp(-20*Time.unscaledDeltaTime));
             // The simulation turns stick travel into walk, jog or run. Keys are all-or-nothing, so they jog, and the run key runs.
             Vector2 keys=move.ReadValue<Vector2>();
