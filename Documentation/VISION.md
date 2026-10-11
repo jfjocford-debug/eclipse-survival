@@ -59,6 +59,11 @@ Note: Berserk is someone else's creation. For a personal project that is fine. I
 
 Our own assets, made as a mixture of the reference screenshots: the warm, 1970s radio-station isometric look, Project Zomboid's readable isometric survival view, and State of Decay's fog and mood. The mixture is refined until it becomes this game's own style. The map, the look and the asset pipeline are Milestone 3 work; gameplay systems do not wait for final art.
 
+### Art pipeline (decided Oct 11)
+- Format: 2D sprites on an isometric grid, as in Project Zomboid (not 3D models).
+- Method: we make the assets first, then adjust them.
+- Rule: no asset is made unless a pillar or a decision in the game needs it. The first set is a slice, not the full list (see ART.md).
+
 ## What this changes in the plan
 
 - **Map.** A 10 by 10 street cannot carry this vision. A small believable town is needed before the community and the story work.
