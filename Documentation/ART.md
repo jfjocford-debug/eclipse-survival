@@ -16,3 +16,45 @@ The directional Animator controller has North/South/East/West states but deliber
 `PixelArt.Texture` creates original small grass/road/floor tiles, houses, trees, cars, crates, shadows, bandit and scavenger placeholders. Asset setup writes these to Resources/Generated so runtime can reuse imported sprites. The Art/Tilesets, Art/Props and Art/UI folders are reserved for authored replacements.
 
 Audio placeholders are original deterministic synthesis in ProjectSetup: wind, bird chirps, heartbeat, distortion, melee and hurt. They are generated as mono WAV and imported through Unity's AudioImporter. There are no ripped game sprites, music, or commercial sample dependencies. Unity template project settings are derived from the editor's 2D URP starter template; Unity runtime/package licensing still applies normally.
+
+---
+
+# Sprite specification (decided Oct 11)
+
+Two-dimensional sprites on an isometric grid, as in Project Zomboid. Assets are made first, then adjusted. Check any sheet with `python3 Tools/sprites.py check Assets/Eclipse/Art/Sprites`; repair a loosely drawn sheet with `python3 Tools/sprites.py fit`.
+
+## Scale
+
+| Item | Value |
+|---|---|
+| Pixels per unit | 64 (the project currently uses 48; it changes when the first real sheet is wired in) |
+| Ground tile | 128 × 64 px diamond (2:1), which is the 2 × 1 cell the game grid already uses |
+| Standing human | about 140 px tall inside a 96 × 160 cell (about 2.2 units, a little over one tile wide, as in Project Zomboid) |
+| Apostle | large cell 160 × 256 px, about 220 px tall (decided when it is drawn; keep the 2:1 ratio to the human) |
+
+## Character sheets
+
+- Path: `Assets/Eclipse/Art/Sprites/Characters/<id>/<id>_<action>.png`, lowercase, for example `player_walk.png`.
+- One sheet per action. **Columns are frames, rows are facings.** The five rows, top to bottom: **S, SE, E, NE, N**. S faces the camera, N faces away. SW, W and NW are the mirror of SE, E and NE, made in the game, so they are never drawn. This cuts the drawing work by three eighths.
+- Cell 96 × 160. Sheet size is (frames × 96) by 800.
+- Frames per action: idle 2, walk 6, crouchwalk 4, swing 4. These four are the first slice. Later: run 6, prone 4, shoot 3, hurt 2, death 6.
+- Feet touch the bottom row of the cell and are centred on it. The character never touches the side of the cell. Every frame of a sheet stands on the same spot, so animation does not jitter.
+- Transparent background, no faint halo pixels (alpha below 24 is cleared), no baked ground shadow (the game draws one).
+- The character is drawn **without a held item and with neutral hands**. Weapons are separate sprites drawn over the character, so one body works with every weapon.
+
+## Lighting
+
+Unity already uses the URP 2D renderer, so 2D lights are available. The plan, applied when the first sheet is wired in:
+
+- Sprites switch from the unlit sprite shader to the lit one. A global light carries day, night and the Eclipse red; point lights carry the lantern and fires; walls cast shadows for interiors.
+- Draw sprites **evenly and softly shaded, with no baked lantern light, no baked red slat light and no baked highlight**, because the light changes with the clock. The shading comes from the game, not the painting. Your lighting test does this in a web page; in Unity the same effect comes from lights.
+- No normal maps in the first version. They double the drawing work per frame and can be added later without redrawing the colour sheets.
+
+## Props, tiles and items
+
+- Props and buildings: one tightly cropped PNG each, in `Art/Sprites/Props`, pivot at the centre of the base. Ground tiles: 128 × 64, in `Art/Sprites/Tiles`. Item icons: 48 × 48, in `Art/Sprites/Items`.
+- Every PNG under `Art/Sprites` imports the same way (`SpriteImportRules`): uncompressed, point filtered, no mipmaps, clamped. Nothing needs setting by hand.
+
+## First slice (nothing outside it until it has been played)
+
+Player (idle, walk, crouchwalk, swing); one shambler and the Apostle (walk, attack, 3 facings may be enough for the shambler); the safehouse room; one street block; about 12 item icons.
