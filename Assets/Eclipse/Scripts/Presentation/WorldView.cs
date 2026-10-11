@@ -18,6 +18,7 @@ namespace EclipseSurvival
         SpriteRenderer player;
         Rigidbody2D playerBody;
         Animator animator;
+        Sprite heroSprite;
         SpriteRenderer targetRing;
         VisibilityRing visibility;
         Material spriteMaterial;
@@ -36,7 +37,7 @@ namespace EclipseSurvival
             spriteMaterial=game.config.spriteMaterial;
             gameObject.AddComponent<CombatEffects>().Initialize(game,spriteMaterial);
             player=Actor("Player",game.config.playerPrefab,game.config.hero?game.config.hero:PixelArt.Get("scavenger"));
-            SetHeight(player,1.95f);
+            SetHeight(player,1.95f);heroSprite=player.sprite;
             playerBody=player.GetComponent<Rigidbody2D>();if(!playerBody)playerBody=player.gameObject.AddComponent<Rigidbody2D>();playerBody.bodyType=RigidbodyType2D.Kinematic;playerBody.gravityScale=0;playerBody.interpolation=RigidbodyInterpolation2D.Interpolate;
             var body=player.GetComponent<CircleCollider2D>();if(!body)body=player.gameObject.AddComponent<CircleCollider2D>();body.radius=.06f;body.isTrigger=true;
             if(game.config.locomotion){animator=player.GetComponent<Animator>();if(!animator)animator=player.gameObject.AddComponent<Animator>();animator.runtimeAnimatorController=game.config.locomotion;}
@@ -107,6 +108,8 @@ namespace EclipseSurvival
         {
             if(game==null||game.State==null)return;
             RefreshArea();var s=game.State;var p=s.Player;
+            // The animator can overwrite the sprite with a missing reference; keep the hero visible.
+            if(!player.sprite){player.sprite=heroSprite;Debug.LogWarning("Player sprite was cleared by the animator; restored.");}
             playerBody.position=Iso.World(p.Position);player.sortingOrder=Depth.ActorOrder(p.Position,area=="street");
             float h=p.Stance==Stance.Crawl?.8f:p.Stance==Stance.Crouch?1.3f:1.95f;SetHeight(player,h);
             if(p.Posture==Posture.Stand)visibility.Hide();
