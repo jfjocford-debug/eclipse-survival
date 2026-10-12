@@ -18,7 +18,7 @@
 | Crouched or prone in grass (not on the road) | x 0.65 |
 | Making noise | +2 tiles |
 
-The ring on the ground is your real range. The wedge on the ground in front of each enemy is where it looks.
+The ring on the ground is your real range. The wedge on the ground in front of each enemy is where it looks. **Both are hidden by default (Oct 11 decision); press F3 to show them while tuning.** Project Zomboid shows no such markings, so the world has to carry this information.
 
 ## The safehouse
 

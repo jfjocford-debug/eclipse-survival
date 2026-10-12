@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
 using EclipseSurvival.Core;
 namespace EclipseSurvival
@@ -21,6 +22,7 @@ namespace EclipseSurvival
         Sprite heroSprite;
         SpriteRenderer targetRing, heldWeapon;
         VisibilityRing visibility;
+        bool debugStealth;   // F3 shows the sight ring and view cones. Off by default: the world itself should tell you, as in Project Zomboid.
         readonly Dictionary<int,ViewCone> cones=new Dictionary<int,ViewCone>();
         readonly Dictionary<int,TextMesh> alerts=new Dictionary<int,TextMesh>();
         Material spriteMaterial;
@@ -123,12 +125,13 @@ namespace EclipseSurvival
         void LateUpdate()
         {
             if(game==null||game.State==null)return;
+            if(Keyboard.current!=null&&Keyboard.current.f3Key.wasPressedThisFrame)debugStealth=!debugStealth;
             RefreshArea();var s=game.State;var p=s.Player;
             // The animator can overwrite the sprite with a missing reference; keep the hero visible.
             if(!player.sprite){player.sprite=heroSprite;Debug.LogWarning("Player sprite was cleared by the animator; restored.");}
             playerBody.position=Iso.World(p.Position);player.sortingOrder=Depth.ActorOrder(p.Position,area=="street");
             float h=p.Stance==Stance.Crawl?.8f:p.Stance==Stance.Crouch?1.3f:1.95f;SetHeight(player,h);
-            if(area!="street")visibility.Hide();
+            if(area!="street"||!debugStealth)visibility.Hide();
             else visibility.Show(p.Position,Simulation.DetectionRadius(s));
             // The weapon in your hands, so you can always see whether you are armed.
             bool armed=s.Equipped!=Weapon.Fists;heldWeapon.gameObject.SetActive(armed);
@@ -177,7 +180,7 @@ namespace EclipseSurvival
             if(!visible||!near||e.State==AiState.Flee){cone.Hide();mark.gameObject.SetActive(false);return;}
             var def=s.Data.EnemyOf(e.Kind);float half=def.ViewHalfAngle>0f?def.ViewHalfAngle:65f;
             Color tone=hunting?new Color(1f,.3f,.2f,.5f):searching?new Color(1f,.62f,.2f,.42f):wary?new Color(1f,.82f,.3f,.38f):new Color(1f,.92f,.6f,.2f);
-            if(hunting)cone.Hide();else cone.Show(e.Position,e.Face,half,Simulation.DetectionRadius(s,e.Kind),tone);
+            if(hunting||!debugStealth)cone.Hide();else cone.Show(e.Position,e.Face,half,Simulation.DetectionRadius(s,e.Kind),tone);
             mark.gameObject.SetActive(hunting||searching||wary);
             if(mark.gameObject.activeSelf)
             {
