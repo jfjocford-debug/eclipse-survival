@@ -1,0 +1,22 @@
+{
+  "node": "v20.19.2",
+  "cpu": "DO-Regular",
+  "logicalCPUs": 1,
+  "memoryMB": 967,
+  "note": "Node timings exclude browser rendering and are diagnostic, not device-independent budgets.",
+  "world": {
+    "samples": 60,
+    "updateP50Ms": 2.6533170000000155,
+    "updateP95Ms": 19.074433,
+    "queryP95Ms": 9.430950999999936,
+    "maxRetainedChunks": 35,
+    "finalVisibleProps": 183
+  },
+  "ai": {
+    "actors": 100,
+    "samples": 60,
+    "p50Ms": 18.43627700000002,
+    "p95Ms": 71.23438699999997,
+    "maxPathsPerStep": 7
+  }
+}

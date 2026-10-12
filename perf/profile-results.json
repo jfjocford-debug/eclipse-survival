@@ -1,0 +1,266 @@
+{
+  "browser": "146.0.7680.177",
+  "gpu": {
+    "devices": [
+      {
+        "vendorId": 65535,
+        "deviceId": 65535,
+        "vendorString": "Google Inc. (Google)",
+        "deviceString": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver-5.0.0)",
+        "driverVendor": "SwANGLE",
+        "driverVersion": "5.0.0"
+      }
+    ],
+    "featureStatus": {
+      "2d_canvas": "unavailable_software",
+      "direct_rendering_display_compositor": "disabled_off_ok",
+      "gpu_compositing": "disabled_software",
+      "multiple_raster_threads": "disabled_off",
+      "opengl": "disabled_off",
+      "rasterization": "disabled_software",
+      "raw_draw": "disabled_off_ok",
+      "skia_graphite": "disabled_off",
+      "trees_in_viz": "disabled_off",
+      "video_decode": "disabled_software",
+      "video_encode": "disabled_software",
+      "vulkan": "disabled_off",
+      "webgl": "unavailable_software",
+      "webgpu": "unavailable_software",
+      "webgpu_on_vk_via_gl_interop": "disabled_off",
+      "webnn": "unavailable_software"
+    }
+  },
+  "timings": {
+    "phases": [
+      {
+        "label": "baseline",
+        "meanMs": 22.050000000024838,
+        "p95Ms": 33.40000000000009
+      },
+      {
+        "label": "ground-cache-disabled",
+        "meanMs": 43.100000000049675,
+        "p95Ms": 50.09999999999991
+      },
+      {
+        "label": "ground-cache-reenabled",
+        "meanMs": 23.416666666691494,
+        "p95Ms": 33.400000000000546
+      },
+      {
+        "label": "without-backdrop-filter",
+        "meanMs": 29.191666666666666,
+        "p95Ms": 50
+      },
+      {
+        "label": "without-canvas-render",
+        "meanMs": 16.70166666666667,
+        "p95Ms": 16.799999999999272
+      }
+    ],
+    "sections": {
+      "getProps": {
+        "calls": 738,
+        "meanMs": 0.028997289910306777,
+        "maxMs": 0.4000000059604645
+      },
+      "update": {
+        "calls": 491,
+        "meanMs": 0.1657841139436982,
+        "maxMs": 1.8000000044703484
+      },
+      "getVisibleTiles": {
+        "calls": 247,
+        "meanMs": 0.4963562752795123,
+        "maxMs": 1.7000000029802322
+      },
+      "_propShadows": {
+        "calls": 240,
+        "meanMs": 0.17666666641210516,
+        "maxMs": 0.7000000029802322
+      },
+      "_windowShafts": {
+        "calls": 240,
+        "meanMs": 0.049166666654249035,
+        "maxMs": 0.20000000298023224
+      },
+      "_blood": {
+        "calls": 240,
+        "meanMs": 0.007083333314706882,
+        "maxMs": 0.10000000149011612
+      },
+      "_attack": {
+        "calls": 240,
+        "meanMs": 0.0066666666728754835,
+        "maxMs": 0.10000000149011612
+      },
+      "_particles": {
+        "calls": 240,
+        "meanMs": 0.0024999999751647312,
+        "maxMs": 0.10000000149011612
+      },
+      "_lighting": {
+        "calls": 240,
+        "meanMs": 1.049583333513389,
+        "maxMs": 5.399999998509884
+      },
+      "_weather": {
+        "calls": 240,
+        "meanMs": 0.0549999996398886,
+        "maxMs": 0.20000000298023224
+      },
+      "_vignettePass": {
+        "calls": 240,
+        "meanMs": 0.004166666697710752,
+        "maxMs": 0.10000000149011612
+      },
+      "render": {
+        "calls": 240,
+        "meanMs": 3.557916666443149,
+        "maxMs": 8.799999997019768
+      },
+      "ui": {
+        "calls": 300,
+        "meanMs": 0.1186666668454806,
+        "maxMs": 4.300000004470348
+      },
+      "_floorDetails": {
+        "calls": 60,
+        "meanMs": 0.46833333410322664,
+        "maxMs": 1.1000000014901161
+      }
+    }
+  },
+  "top": [
+    {
+      "function": "(program)",
+      "url": "",
+      "line": 0,
+      "selfMs": 6529.787
+    },
+    {
+      "function": "(idle)",
+      "url": "",
+      "line": 0,
+      "selfMs": 900.803
+    },
+    {
+      "function": "drawImage",
+      "url": "",
+      "line": 0,
+      "selfMs": 215.112
+    },
+    {
+      "function": "drawImage",
+      "url": "",
+      "line": 0,
+      "selfMs": 60.385
+    },
+    {
+      "function": "drawImage",
+      "url": "",
+      "line": 0,
+      "selfMs": 53.421
+    },
+    {
+      "function": "_loadChunk",
+      "url": "https://deadfall-cwdknte.solid.site/world/generator.js",
+      "line": 109,
+      "selfMs": 37.727
+    },
+    {
+      "function": "(garbage collector)",
+      "url": "",
+      "line": 0,
+      "selfMs": 31.853
+    },
+    {
+      "function": "getTile",
+      "url": "https://deadfall-cwdknte.solid.site/world/generator.js",
+      "line": 173,
+      "selfMs": 25.3
+    },
+    {
+      "function": "requestAnimationFrame",
+      "url": "",
+      "line": 0,
+      "selfMs": 17.134
+    },
+    {
+      "function": "object.<computed>",
+      "url": "",
+      "line": 5,
+      "selfMs": 14.584
+    },
+    {
+      "function": "fillRect",
+      "url": "",
+      "line": 0,
+      "selfMs": 13.315
+    },
+    {
+      "function": "_weather",
+      "url": "https://deadfall-cwdknte.solid.site/render/renderer.js",
+      "line": 303,
+      "selfMs": 13.013
+    },
+    {
+      "function": "get",
+      "url": "https://deadfall-cwdknte.solid.site/render/props.js",
+      "line": 8,
+      "selfMs": 12.463
+    },
+    {
+      "function": "stroke",
+      "url": "",
+      "line": 0,
+      "selfMs": 12.12
+    },
+    {
+      "function": "drawImage",
+      "url": "",
+      "line": 0,
+      "selfMs": 11.189
+    },
+    {
+      "function": "update",
+      "url": "https://deadfall-cwdknte.solid.site/ui/hud.js",
+      "line": 83,
+      "selfMs": 10.998
+    },
+    {
+      "function": "object.<computed>",
+      "url": "",
+      "line": 5,
+      "selfMs": 9.718
+    },
+    {
+      "function": "_lighting",
+      "url": "https://deadfall-cwdknte.solid.site/render/renderer.js",
+      "line": 272,
+      "selfMs": 9.458
+    },
+    {
+      "function": "getTile",
+      "url": "https://deadfall-cwdknte.solid.site/world/generator.js",
+      "line": 173,
+      "selfMs": 9.347
+    },
+    {
+      "function": "get",
+      "url": "https://deadfall-cwdknte.solid.site/render/tiles.js",
+      "line": 11,
+      "selfMs": 9.07
+    }
+  ],
+  "measurement": {
+    "date": "2026-10-12",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "framesPerPhase": 60,
+    "build": "Final alpha crop and ground cache",
+    "notes": "Same-view sequential phases, not a GPU performance guarantee. Section averages pool all phases."
+  }
+}

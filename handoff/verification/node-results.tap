@@ -1,0 +1,410 @@
+TAP version 13
+# Subtest: melee sweep obeys facing, reach, cooldown and one-time kill credit
+ok 1 - melee sweep obeys facing, reach, cooldown and one-time kill credit
+  ---
+  duration_ms: 8.912663
+  ...
+# Subtest: a wall prevents both melee and pistol hits
+ok 2 - a wall prevents both melee and pistol hits
+  ---
+  duration_ms: 1.276817
+  ...
+# Subtest: pistol consumes one round, hits nearest target, and makes loud noise
+ok 3 - pistol consumes one round, hits nearest target, and makes loud noise
+  ---
+  duration_ms: 1.480102
+  ...
+# Subtest: explicit aim changes direction while stamina prevents exhausted attacks
+ok 4 - explicit aim changes direction while stamina prevents exhausted attacks
+  ---
+  duration_ms: 0.831645
+  ...
+# Subtest: enemy strikes require range and attack permission and respect invulnerability
+ok 5 - enemy strikes require range and attack permission and respect invulnerability
+  ---
+  duration_ms: 1.123771
+  ...
+# Subtest: fatal enemy damage sets death and expired feedback is removed
+ok 6 - fatal enemy damage sets death and expired feedback is removed
+  ---
+  duration_ms: 1.07482
+  ...
+# Subtest: running drains stamina and hydration faster; standing restores stamina
+ok 7 - running drains stamina and hydration faster; standing restores stamina
+  ---
+  duration_ms: 1.059195
+  ...
+# Subtest: bleeding and unmet needs are harmful and pause freezes all systems
+ok 8 - bleeding and unmet needs are harmful and pause freezes all systems
+  ---
+  duration_ms: 1.214871
+  ...
+# Subtest: needs do not duplicate rest health/energy bonuses and always bound values
+ok 9 - needs do not duplicate rest health/energy bonuses and always bound values
+  ---
+  duration_ms: 0.75164
+  ...
+# Subtest: clock rolls across multiple days and deterministic weather survives serialization
+ok 10 - clock rolls across multiple days and deterministic weather survives serialization
+  ---
+  duration_ms: 1.219617
+  ...
+# Subtest: noise investigation routes around a closed wall and uses the opening
+ok 11 - noise investigation routes around a closed wall and uses the opening
+  ---
+  duration_ms: 33.79028
+  ...
+# Subtest: controller fallback preserves player position and respects a closing door
+ok 12 - controller fallback preserves player position and respects a closing door
+  ---
+  duration_ms: 7.729359
+  ...
+# Subtest: stale worker decisions cannot move through a newly closed door
+ok 13 - stale worker decisions cannot move through a newly closed door
+  ---
+  duration_ms: 8.013101
+  ...
+# Subtest: a visible alerted neighbor recruits a zombie facing away from the survivor
+ok 14 - a visible alerted neighbor recruits a zombie facing away from the survivor
+  ---
+  duration_ms: 1.306819
+  ...
+# Subtest: pursuit memory expires after losing both sight and sound
+ok 15 - pursuit memory expires after losing both sight and sound
+  ---
+  duration_ms: 0.922429
+  ...
+# Subtest: CSS projection round trips after camera movement, resize, DPR and zoom
+ok 16 - CSS projection round trips after camera movement, resize, DPR and zoom
+  ---
+  duration_ms: 9.794327
+  ...
+# Subtest: real generated worlds render all prop types, combat, night, rain and fog with finite geometry
+ok 17 - real generated worlds render all prop types, combat, night, rain and fog with finite geometry
+  ---
+  duration_ms: 913.697369
+  ...
+# Subtest: eight supplied survivor assets have valid PNG signatures
+ok 18 - eight supplied survivor assets have valid PNG signatures
+  ---
+  duration_ms: 4.430357
+  ...
+# Subtest: infected reuse loaded directional sprites through a bounded variant cache
+ok 19 - infected reuse loaded directional sprites through a bounded variant cache
+  ---
+  duration_ms: 56.216956
+  ...
+# Subtest: ground cache reuses static paint while panning and rebuilds on viewport, zoom and world changes
+ok 20 - ground cache reuses static paint while panning and rebuilds on viewport, zoom and world changes
+  ---
+  duration_ms: 283.28291
+  ...
+# Subtest: alpha crop preserves world anchors, retains antialias padding, and tolerates limited canvas APIs
+ok 21 - alpha crop preserves world anchors, retains antialias padding, and tolerates limited canvas APIs
+  ---
+  duration_ms: 1.752998
+  ...
+# Subtest: round trip preserves all persistent world, actor and extension fields
+ok 22 - round trip preserves all persistent world, actor and extension fields
+  ---
+  duration_ms: 10.420909
+  ...
+# Subtest: transient objects may be circular and are never traversed
+ok 23 - transient objects may be circular and are never traversed
+  ---
+  duration_ms: 1.106432
+  ...
+# Subtest: plain prototype state receives missing optional defaults
+ok 24 - plain prototype state receives missing optional defaults
+  ---
+  duration_ms: 0.834888
+  ...
+# Subtest: invalid values, unsafe keys, cycles and unsupported versions are rejected
+ok 25 - invalid values, unsafe keys, cycles and unsupported versions are rejected
+  ---
+  duration_ms: 8.477301
+  ...
+# Subtest: zero health resumes as dead even when a stale death flag is false
+ok 26 - zero health resumes as dead even when a stale death flag is false
+  ---
+  duration_ms: 1.141895
+  ...
+# Subtest: IndexedDB round trip commits, mirrors and closes connections
+ok 27 - IndexedDB round trip commits, mirrors and closes connections
+  ---
+  duration_ms: 53.739015
+  ...
+# Subtest: unavailable IndexedDB uses localStorage and reports the fallback
+ok 28 - unavailable IndexedDB uses localStorage and reports the fallback
+  ---
+  duration_ms: 23.284609
+  ...
+# Subtest: both storage backends unavailable reject with an actionable error
+ok 29 - both storage backends unavailable reject with an actionable error
+  ---
+  duration_ms: 13.47361
+  ...
+# Subtest: quota failures are reported and a rejected operation does not poison the queue
+ok 30 - quota failures are reported and a rejected operation does not poison the queue
+  ---
+  duration_ms: 20.216448
+  ...
+# Subtest: snapshot is captured before waiting; overlapping writes preserve invocation order
+ok 31 - snapshot is captured before waiting; overlapping writes preserve invocation order
+  ---
+  duration_ms: 81.430184
+  ...
+# Subtest: transaction abort after request success rejects without fallback
+ok 32 - transaction abort after request success rejects without fallback
+  ---
+  duration_ms: 54.083672
+  ...
+# Subtest: an aborted database transaction still recovers the synchronous mirror
+ok 33 - an aborted database transaction still recovers the synchronous mirror
+  ---
+  duration_ms: 72.798224
+  ...
+# Subtest: load chooses the newest valid copy and preserves a corrupt only copy
+ok 34 - load chooses the newest valid copy and preserves a corrupt only copy
+  ---
+  duration_ms: 56.507703
+  ...
+# Subtest: clear marker supersedes a stale database after a temporary write outage
+ok 35 - clear marker supersedes a stale database after a temporary write outage
+  ---
+  duration_ms: 56.65666
+  ...
+# Subtest: a queued clear followed by a save produces a later timestamp even if one backend fails
+ok 36 - a queued clear followed by a save produces a later timestamp even if one backend fails
+  ---
+  duration_ms: 69.942478
+  ...
+# Subtest: import validates before storage and handles oversized or unreadable files
+ok 37 - import validates before storage and handles oversized or unreadable files
+  ---
+  duration_ms: 31.681807
+  ...
+# Subtest: A* navigates the only wall opening with legal steps and a reachable goal
+ok 38 - A* navigates the only wall opening with legal steps and a reachable goal
+  ---
+  duration_ms: 9.126439
+  ...
+# Subtest: blocked corners prevent pathfinding and sight from cutting diagonally
+ok 39 - blocked corners prevent pathfinding and sight from cutting diagonally
+  ---
+  duration_ms: 0.584741
+  ...
+# Subtest: visible survivors trigger pursuit; a solid wall prevents sight and attacks
+ok 40 - visible survivors trigger pursuit; a solid wall prevents sight and attacks
+  ---
+  duration_ms: 3.144863
+  ...
+# Subtest: noise creates an investigation target behind cover and repaths stay bounded
+ok 41 - noise creates an investigation target behind cover and repaths stay bounded
+  ---
+  duration_ms: 15.891168
+  ...
+# Subtest: a real worker returns sequenced actor decisions and ignores unrelated messages
+ok 42 - a real worker returns sequenced actor decisions and ignores unrelated messages
+  ---
+  duration_ms: 171.720852
+  ...
+# Subtest: ECS joins requested components, preserves falsy values, and removes entities
+ok 43 - ECS joins requested components, preserves falsy values, and removes entities
+  ---
+  duration_ms: 9.193754
+  ...
+# Subtest: two seconds of movement is identical at 30, 60 and 144Hz
+ok 44 - two seconds of movement is identical at 30, 60 and 144Hz
+  ---
+  duration_ms: 9.533674
+  ...
+# Subtest: hidden tabs skip simulation and resume without offline drain
+ok 45 - hidden tabs skip simulation and resume without offline drain
+  ---
+  duration_ms: 1.460837
+  ...
+# Subtest: stop from a callback and error callbacks leave no scheduled work
+ok 46 - stop from a callback and error callbacks leave no scheduled work
+  ---
+  duration_ms: 1.231348
+  ...
+# Subtest: Z sneak remains available while browser modifier shortcuts are ignored
+ok 47 - Z sneak remains available while browser modifier shortcuts are ignored
+  ---
+  duration_ms: 5.679106
+  ...
+# Subtest: holding a shortcut cannot repeat its edge and editing focus releases held controls
+ok 48 - holding a shortcut cannot repeat its edge and editing focus releases held controls
+  ---
+  duration_ms: 5.025219
+  ...
+# Subtest: cancelled pointers stop attacks; wheel and context menu handling stay on canvas
+ok 49 - cancelled pointers stop attacks; wheel and context menu handling stay on canvas
+  ---
+  duration_ms: 3.348201
+  ...
+# Subtest: ECS keeps actor references, intersects sparse components, and removes all traces
+ok 50 - ECS keeps actor references, intersects sparse components, and removes all traces
+  ---
+  duration_ms: 2.320346
+  ...
+# Subtest: fixed simulation step caps catch-up after a long frame and renders a valid alpha
+ok 51 - fixed simulation step caps catch-up after a long frame and renders a valid alpha
+  ---
+  duration_ms: 6.4391
+  ...
+# Subtest: input normalizes diagonal speed, preserves tap edges and clears keys after blur
+ok 52 - input normalizes diagonal speed, preserves tap edges and clears keys after blur
+  ---
+  duration_ms: 6.942661
+  ...
+# Subtest: typing is ignored and pointer uses CSS coordinates rather than backing pixels
+ok 53 - typing is ignored and pointer uses CSS coordinates rather than backing pixels
+  ---
+  duration_ms: 2.655366
+  ...
+# Subtest: game interaction loots starter container once and crafting consumes the required materials
+ok 54 - game interaction loots starter container once and crafting consumes the required materials
+  ---
+  duration_ms: 115.351965
+  ...
+# Subtest: real game movement stops at a closed exit and passes after opening it
+ok 55 - real game movement stops at a closed exit and passes after opening it
+  ---
+  duration_ms: 248.29211
+  ...
+# Subtest: barricade consumes materials and stays collidable after snapshot restore
+ok 56 - barricade consumes materials and stays collidable after snapshot restore
+  ---
+  duration_ms: 71.322018
+  ...
+# Subtest: paused game cannot move or deplete needs; fatal needs are saved once
+ok 57 - paused game cannot move or deplete needs; fatal needs are saved once
+  ---
+  duration_ms: 98.894514
+  ...
+# Subtest: building and dismantling update resources, collision and the persistent world
+ok 58 - building and dismantling update resources, collision and the persistent world
+  ---
+  duration_ms: 41.268154
+  ...
+# Subtest: import cannot be overwritten by the old survivor during pagehide autosave
+ok 59 - import cannot be overwritten by the old survivor during pagehide autosave
+  ---
+  duration_ms: 85.794982
+  ...
+# Subtest: frame samples remain bounded and report percentiles
+ok 60 - frame samples remain bounded and report percentiles
+  ---
+  duration_ms: 5.180761
+  ...
+# Subtest: tab suspension is ignored and named timings can be reset
+ok 61 - tab suspension is ignored and named timings can be reset
+  ---
+  duration_ms: 4.351405
+  ...
+# Subtest: save round-trip retains persistent world, actors, skills and objectives without aliases
+ok 62 - save round-trip retains persistent world, actors, skills and objectives without aliases
+  ---
+  duration_ms: 15.055978
+  ...
+# Subtest: invalid JSON, future versions, nonfinite health and duplicate actors are rejected
+ok 63 - invalid JSON, future versions, nonfinite health and duplicate actors are rejected
+  ---
+  duration_ms: 4.454729
+  ...
+# Subtest: localStorage fallback snapshots eagerly, orders saves, and clears durably
+ok 64 - localStorage fallback snapshots eagerly, orders saves, and clears durably
+  ---
+  duration_ms: 19.232482
+  ...
+# Subtest: storage failures are reported and imported files are validated before use
+ok 65 - storage failures are reported and imported files are validated before use
+  ---
+  duration_ms: 3.530265
+  ...
+# Subtest: needs deplete with time, sprinting costs more, and depleted needs cause bounded damage
+ok 66 - needs deplete with time, sprinting costs more, and depleted needs cause bounded damage
+  ---
+  duration_ms: 8.067359
+  ...
+# Subtest: paused/dead simulations freeze and day rollover handles midnight
+ok 67 - paused/dead simulations freeze and day rollover handles midnight
+  ---
+  duration_ms: 5.382371
+  ...
+# Subtest: melee damages in front, respects walls and cooldown, and counts a kill once
+ok 68 - melee damages in front, respects walls and cooldown, and counts a kill once
+  ---
+  duration_ms: 3.89006
+  ...
+# Subtest: ranged attacks require and consume ammunition, generate noise, and clear feedback
+ok 69 - ranged attacks require and consume ammunition, generate noise, and clear feedback
+  ---
+  duration_ms: 3.892225
+  ...
+# Subtest: enemy strikes have cooldowns and cannot damage when current collision blocks attacks
+ok 70 - enemy strikes have cooldowns and cannot damage when current collision blocks attacks
+  ---
+  duration_ms: 1.250552
+  ...
+# Subtest: world seed is deterministic across positive and negative chunk boundaries
+ok 71 - world seed is deterministic across positive and negative chunk boundaries
+  ---
+  duration_ms: 614.057194
+  ...
+# Subtest: safehouse has clear spawn, reachable loot and an east exit with live collision
+ok 72 - safehouse has clear spawn, reachable loot and an east exit with live collision
+  ---
+  duration_ms: 78.105517
+  ...
+# Subtest: loot mutations and door state persist through streaming and fresh world restore
+ok 73 - loot mutations and door state persist through streaming and fresh world restore
+  ---
+  duration_ms: 129.939678
+  ...
+# Subtest: streaming retains a bounded chunk set and props are unique across seams
+ok 74 - streaming retains a bounded chunk set and props are unique across seams
+  ---
+  duration_ms: 282.930232
+  ...
+# Subtest: built barriers span chunk and town-block seams, survive reload, and clear on destruction
+ok 75 - built barriers span chunk and town-block seams, survive reload, and clear on destruction
+  ---
+  duration_ms: 162.084961
+  ...
+# Subtest: placement rejects blocked footprints without storing a custom object
+ok 76 - placement rejects blocked footprints without storing a custom object
+  ---
+  duration_ms: 8.803783
+  ...
+# Subtest: destroyed generated walls persist and create a traversable opening
+ok 77 - destroyed generated walls persist and create a traversable opening
+  ---
+  duration_ms: 136.468308
+  ...
+# Subtest: all landmark entrances connect to the street and their loot is accessible
+ok 78 - all landmark entrances connect to the street and their loot is accessible
+  ---
+  duration_ms: 108.224056
+  ...
+# Subtest: applyChanges preserves references and changes made to nested loot arrays
+ok 79 - applyChanges preserves references and changes made to nested loot arrays
+  ---
+  duration_ms: 36.821772
+  ...
+# Subtest: unmodified exploration stores no changes and evicts distant query chunks
+ok 80 - unmodified exploration stores no changes and evicts distant query chunks
+  ---
+  duration_ms: 601.491228
+  ...
+1..80
+# tests 80
+# suites 0
+# pass 80
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10519.928855

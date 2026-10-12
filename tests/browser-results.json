@@ -1,0 +1,605 @@
+{
+  "date": "2026-10-12",
+  "environment": {
+    "os": "Debian 13",
+    "vcpus": 2,
+    "memoryGiB": 3.83,
+    "headless": true,
+    "softwareRendering": true
+  },
+  "fullGameplayRevision": "Ground cache, import overwrite guard and restart cleanup; before final renderer-only alpha crop",
+  "finalRenderRevision": "Final alpha-crop and ground-cache deployment",
+  "gameplay": {
+    "chromium": {
+      "url": "https://deadfall-cwdknte.solid.site",
+      "at": "2026-10-12T20:21:12.414Z",
+      "browserName": "chromium",
+      "browser": "146.0.7680.177",
+      "checks": [
+        {
+          "name": "direct boot and browser worker",
+          "passed": true,
+          "detail": {
+            "workers": [
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+            ]
+          }
+        },
+        {
+          "name": "E searches starter supplies and updates the journal",
+          "passed": true,
+          "detail": {
+            "before": {
+              "looted": 0,
+              "items": 20
+            },
+            "after": {
+              "looted": 1,
+              "items": 34
+            }
+          }
+        },
+        {
+          "name": "keyboard movement and collision",
+          "passed": true,
+          "detail": {
+            "before": {
+              "x": 7.5,
+              "y": 7.5
+            },
+            "after": {
+              "x": 8.490538749312156,
+              "y": 6.509461250687862,
+              "passable": true
+            }
+          }
+        },
+        {
+          "name": "pause freezes simulation and resumes",
+          "passed": true
+        },
+        {
+          "name": "inventory dialog and consumable action",
+          "passed": true,
+          "detail": {
+            "before": 4,
+            "after": 3,
+            "thirst": 78
+          }
+        },
+        {
+          "name": "persistent inventory and position survive reload",
+          "passed": true,
+          "detail": {
+            "x": 8.490538749312156,
+            "y": 6.509461250687862,
+            "water": 3
+          }
+        },
+        {
+          "name": "zoom projection remains invertible",
+          "passed": true,
+          "detail": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "save export downloads a valid versioned snapshot",
+          "passed": true,
+          "detail": {
+            "name": "deadfall-day-1-2026-10-12T20-21-23.json",
+            "health": 100
+          }
+        },
+        {
+          "name": "file import restores exported inventory, position and health",
+          "passed": true,
+          "detail": {
+            "x": 8.490538749312156,
+            "y": 6.509461250687862,
+            "hp": 100,
+            "inventory": [
+              {
+                "id": "bat",
+                "qty": 1
+              },
+              {
+                "id": "water",
+                "qty": 3
+              },
+              {
+                "id": "beans",
+                "qty": 4
+              },
+              {
+                "id": "bandage",
+                "qty": 4
+              },
+              {
+                "id": "plank",
+                "qty": 4
+              },
+              {
+                "id": "nails",
+                "qty": 14
+              },
+              {
+                "id": "hammer",
+                "qty": 1
+              },
+              {
+                "id": "cloth",
+                "qty": 2
+              }
+            ]
+          }
+        },
+        {
+          "name": "Space and aimed pointer attacks damage a nearby infected",
+          "passed": true,
+          "detail": {
+            "keyboardHealth": 66,
+            "pointerHealth": 62
+          }
+        },
+        {
+          "name": "keyboard barricade changes collision and persists through browser reload",
+          "passed": true,
+          "detail": {
+            "barricaded": 1,
+            "blocked": true,
+            "objectives": 1
+          }
+        },
+        {
+          "name": "1280px viewport and frame sample",
+          "passed": true,
+          "detail": {
+            "meanMs": 47.34777777771155,
+            "p95Ms": 66.60000000000036,
+            "samples": 90,
+            "width": 1280,
+            "documentWidth": 1280
+          }
+        },
+        {
+          "name": "death overlay can restart with a fresh survivor",
+          "passed": true,
+          "detail": {
+            "dead": false,
+            "hp": 100,
+            "panel": null,
+            "looted": 0,
+            "x": 7.5,
+            "y": 7.5
+          }
+        },
+        {
+          "name": "runtime errors absent",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "workers": [
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+      ]
+    },
+    "firefox": {
+      "url": "https://deadfall-cwdknte.solid.site",
+      "at": "2026-10-12T20:21:50.689Z",
+      "browserName": "firefox",
+      "browser": "157.0",
+      "checks": [
+        {
+          "name": "direct boot and browser worker",
+          "passed": true,
+          "detail": {
+            "workers": [
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+            ]
+          }
+        },
+        {
+          "name": "E searches starter supplies and updates the journal",
+          "passed": true,
+          "detail": {
+            "before": {
+              "looted": 0,
+              "items": 20
+            },
+            "after": {
+              "looted": 1,
+              "items": 34
+            }
+          }
+        },
+        {
+          "name": "keyboard movement and collision",
+          "passed": true,
+          "detail": {
+            "before": {
+              "x": 7.5,
+              "y": 7.5
+            },
+            "after": {
+              "x": 8.514698231002697,
+              "y": 6.4853017689973225,
+              "passable": true
+            }
+          }
+        },
+        {
+          "name": "pause freezes simulation and resumes",
+          "passed": true
+        },
+        {
+          "name": "inventory dialog and consumable action",
+          "passed": true,
+          "detail": {
+            "before": 4,
+            "after": 3,
+            "thirst": 78
+          }
+        },
+        {
+          "name": "persistent inventory and position survive reload",
+          "passed": true,
+          "detail": {
+            "x": 8.514698231002697,
+            "y": 6.4853017689973225,
+            "water": 3
+          }
+        },
+        {
+          "name": "zoom projection remains invertible",
+          "passed": true,
+          "detail": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "save export downloads a valid versioned snapshot",
+          "passed": true,
+          "detail": {
+            "name": "deadfall-day-1-2026-10-12T20-22-01.json",
+            "health": 100
+          }
+        },
+        {
+          "name": "file import restores exported inventory, position and health",
+          "passed": true,
+          "detail": {
+            "x": 8.514698231002697,
+            "y": 6.4853017689973225,
+            "hp": 100,
+            "inventory": [
+              {
+                "id": "bat",
+                "qty": 1
+              },
+              {
+                "id": "water",
+                "qty": 3
+              },
+              {
+                "id": "beans",
+                "qty": 4
+              },
+              {
+                "id": "bandage",
+                "qty": 4
+              },
+              {
+                "id": "plank",
+                "qty": 4
+              },
+              {
+                "id": "nails",
+                "qty": 14
+              },
+              {
+                "id": "hammer",
+                "qty": 1
+              },
+              {
+                "id": "cloth",
+                "qty": 2
+              }
+            ]
+          }
+        },
+        {
+          "name": "Space and aimed pointer attacks damage a nearby infected",
+          "passed": true,
+          "detail": {
+            "keyboardHealth": 66,
+            "pointerHealth": 62
+          }
+        },
+        {
+          "name": "keyboard barricade changes collision and persists through browser reload",
+          "passed": true,
+          "detail": {
+            "barricaded": 1,
+            "blocked": true,
+            "objectives": 1
+          }
+        },
+        {
+          "name": "1280px viewport and frame sample",
+          "passed": true,
+          "detail": {
+            "meanMs": 55.42377777777778,
+            "p95Ms": 67.31999999999971,
+            "samples": 90,
+            "width": 1280,
+            "documentWidth": 1280
+          }
+        },
+        {
+          "name": "death overlay can restart with a fresh survivor",
+          "passed": true,
+          "detail": {
+            "dead": false,
+            "hp": 100,
+            "panel": null,
+            "looted": 0,
+            "x": 7.5,
+            "y": 7.5
+          }
+        },
+        {
+          "name": "runtime errors absent",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "workers": [
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+      ]
+    },
+    "webkit": {
+      "url": "https://deadfall-cwdknte.solid.site",
+      "at": "2026-10-12T20:22:28.078Z",
+      "browserName": "webkit",
+      "browser": "27.2",
+      "checks": [
+        {
+          "name": "direct boot and browser worker",
+          "passed": true,
+          "detail": {
+            "workers": [
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+              "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+            ]
+          }
+        },
+        {
+          "name": "E searches starter supplies and updates the journal",
+          "passed": true,
+          "detail": {
+            "before": {
+              "looted": 0,
+              "items": 20
+            },
+            "after": {
+              "looted": 1,
+              "items": 34
+            }
+          }
+        },
+        {
+          "name": "keyboard movement and collision",
+          "passed": true,
+          "detail": {
+            "before": {
+              "x": 7.5,
+              "y": 7.5
+            },
+            "after": {
+              "x": 8.103987042263503,
+              "y": 6.8960129577365015,
+              "passable": true
+            }
+          }
+        },
+        {
+          "name": "pause freezes simulation and resumes",
+          "passed": true
+        },
+        {
+          "name": "inventory dialog and consumable action",
+          "passed": true,
+          "detail": {
+            "before": 4,
+            "after": 3,
+            "thirst": 78
+          }
+        },
+        {
+          "name": "persistent inventory and position survive reload",
+          "passed": true,
+          "detail": {
+            "x": 8.103987042263503,
+            "y": 6.8960129577365015,
+            "water": 3
+          }
+        },
+        {
+          "name": "zoom projection remains invertible",
+          "passed": true,
+          "detail": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "save export downloads a valid versioned snapshot",
+          "passed": true,
+          "detail": {
+            "name": "deadfall-day-1-2026-10-12T20-22-39.json",
+            "health": 100
+          }
+        },
+        {
+          "name": "file import restores exported inventory, position and health",
+          "passed": true,
+          "detail": {
+            "x": 8.103987042263503,
+            "y": 6.8960129577365015,
+            "hp": 100,
+            "inventory": [
+              {
+                "id": "bat",
+                "qty": 1
+              },
+              {
+                "id": "water",
+                "qty": 3
+              },
+              {
+                "id": "beans",
+                "qty": 4
+              },
+              {
+                "id": "bandage",
+                "qty": 4
+              },
+              {
+                "id": "plank",
+                "qty": 4
+              },
+              {
+                "id": "nails",
+                "qty": 14
+              },
+              {
+                "id": "hammer",
+                "qty": 1
+              },
+              {
+                "id": "cloth",
+                "qty": 2
+              }
+            ]
+          }
+        },
+        {
+          "name": "Space and aimed pointer attacks damage a nearby infected",
+          "passed": true,
+          "detail": {
+            "keyboardHealth": 66,
+            "pointerHealth": 62
+          }
+        },
+        {
+          "name": "keyboard barricade changes collision and persists through browser reload",
+          "passed": true,
+          "detail": {
+            "barricaded": 1,
+            "blocked": true,
+            "objectives": 1
+          }
+        },
+        {
+          "name": "1280px viewport and frame sample",
+          "passed": true,
+          "detail": {
+            "meanMs": 119.54444444444445,
+            "p95Ms": 156,
+            "samples": 90,
+            "width": 1280,
+            "documentWidth": 1280
+          }
+        },
+        {
+          "name": "death overlay can restart with a fresh survivor",
+          "passed": true,
+          "detail": {
+            "dead": false,
+            "hp": 100,
+            "panel": null,
+            "looted": 0,
+            "x": 7.5,
+            "y": 7.5
+          }
+        },
+        {
+          "name": "runtime errors absent",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "workers": [
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js",
+        "https://deadfall-cwdknte.solid.site/workers/aiWorker.js"
+      ]
+    }
+  },
+  "finalRender": {
+    "chromium": {
+      "browser": "chromium",
+      "version": "146.0.7680.177",
+      "passed": true,
+      "errors": [],
+      "geometry": {
+        "error": 8.881784197001252e-16,
+        "passable": true,
+        "zoom": 1.28,
+        "x": 8.635495639455401,
+        "y": 6.364504360544623
+      }
+    },
+    "firefox": {
+      "browser": "firefox",
+      "version": "157.0",
+      "passed": true,
+      "errors": [],
+      "geometry": {
+        "error": 8.881784197001252e-16,
+        "passable": true,
+        "zoom": 1.28,
+        "x": 8.659655121145942,
+        "y": 6.340344878854083
+      }
+    },
+    "webkit": {
+      "browser": "webkit",
+      "version": "27.2",
+      "passed": true,
+      "errors": [],
+      "geometry": {
+        "error": 1.9860273225978185e-15,
+        "passable": true,
+        "zoom": 1.28,
+        "x": 8.538857712693238,
+        "y": 6.4611422873067825
+      }
+    }
+  }
+}
