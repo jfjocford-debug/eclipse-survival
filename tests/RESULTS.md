@@ -120,3 +120,9 @@ After testing, the temporary QA relay `okevuU` was torn down on the browser
 machine and deleted. No browser processes remained and port 1080 was closed.
 The hosting machine and HTTP endpoint were preserved; `deadfall-web` remained
 active and its local HTTP check returned 200. See [cleanup-results.json](cleanup-results.json).
+
+## Baseline re-run, 12 October 2026 (new checks, separate from the historical results above)
+
+- Node: 80 of 80 tests pass (Node 22.22).
+- Chromium (Playwright, headless, software GL), `tests/baseline-chromium.py`: 10 of 10 checks pass: fresh start at spawn, crate collection, save and reload resume position and inventory, pause freezes the clock, Escape resumes, export envelope, import restores the exported survivor, corrupt import rejected. No console errors.
+- Not run: Firefox, WebKit, profiling, long sessions.

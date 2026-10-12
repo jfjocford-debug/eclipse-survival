@@ -7,7 +7,9 @@ North-star test for every feature: **does it create a decision or a consequence 
 3. **Chores become decisions.** Waiting, hauling and repetition collapse into single actions. Choices about risk, supplies and people stay.
 4. **A small, alive simulation.** A few interlocking systems chosen for the stories they create, not a long feature list.
 5. **A place that feels real.** A believable town, believable interiors, loot that makes sense where it is found.
-6. **The twist.** A rare, overwhelming threat (the Apostles in the archive) that is avoided, outlasted or outsmarted, not fought, and that changes how the player plays. A late-game mastered player could fight one. The Eclipse is the clock that brings it. If the game is published, the names and designs must be original.
+6. **The twist, and it is rare.** One overwhelming threat (the Apostles in the archive) that you avoid, outlast or outsmart until you are a mastered late-game player, and even then it is not an easy fight. The Eclipse that brings it must be **rare**: so far apart that the player can forget it exists, until it arrives and the player truly might not survive the night. Rarity is the point; it must never become a routine event. Because the archive's name belongs to someone else's work, the threat needs its own name and design before the game is published.
+
+Design tension to resolve (pillar 2 against pillar 6): a night that may kill you must still be an *earned* death. The answer is a short, readable omen before it begins and real tools to prepare, hide or outlast it, so that survival or failure traces back to the player's preparation, never to a surprise roll.
 
 ## Where Deadfall stands against them (from the handoff; confirm in play)
 
@@ -18,6 +20,6 @@ North-star test for every feature: **does it create a decision or a consequence 
 | 3 | Rest action | A single safe "pass time" action that stops when something happens |
 | 4 | Needs, crafting, barricades, skills | Nothing to cut yet; decide before adding |
 | 5 | Nine named buildings, furnished interiors, streamed town | Interior rooms; lived-in detail |
-| 6 | Ordinary zombies only | The twist threat and the Eclipse clock |
+| 6 | Ordinary zombies only | The rare Eclipse night, the threat, and its omen |
 
 Planned order: vision (VISIBILITY.md) first, the fuse and death recap second, the twist and its clock third.
