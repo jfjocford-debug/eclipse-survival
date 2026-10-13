@@ -26,3 +26,11 @@ The player no longer sees the whole area at once.
 5. Later: interior partitions and room-by-room generation.
 
 Open decisions (answer in play, not in advance): the outdoor radius at day and at night; how faint remembered areas are; whether zombies seen through a window stay shown.
+
+## Status (Oct 12): phase 1 done
+
+`world/visibility.js` and `world/visibility.test.mjs` (14 tests, all passing; whole suite 94 of 94). It computes, from the live props, what the player sees, with no drawing code yet. Nothing is wired into the game or the save.
+
+How it decides, in plain terms: walls, closed doors and barricaded windows stop sight; open doors and clear windows pass it, which makes the cones. Indoors the room is fully in range; outdoors the radius is about 9 tiles on a clear day, 3.5 at night, less in rain, fog and storm. A room is dark unless a door or window lets daylight in or a lamp is lit; tiles within 1.5 tiles can always be felt. Through glass, a tile that is too dark shows a silhouette. Tiles seen are remembered; silhouettes are not.
+
+Known simplifications: trees, cars and fences do not block sight; lamps light only their own building (or the open street); the 1.5-tile near radius, the 0.25 light threshold and the radii are first guesses to tune in play; the memory is not yet saved.
