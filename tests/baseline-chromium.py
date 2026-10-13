@@ -35,7 +35,7 @@ with sync_playwright() as p:
     # export
     with pg.expect_download() as d: pg.evaluate('game.action("export")')
     path=d.value.path(); data=json.load(open(path))
-    check('export is a deadfall-save v1 envelope',data.get('format')=='deadfall-save' and data.get('version')==1,f"{d.value.suggested_filename}")
+    check('export is a deadfall-save v2 envelope',data.get('format')=='deadfall-save' and data.get('version')==2 and 'explored' in data.get('data',{}),f"{d.value.suggested_filename}")
     exp=data['data']; ex,ey=exp['player']['x'],exp['player']['y']
     # move far away, then import the export
     pg.keyboard.down('a'); pg.wait_for_timeout(1500); pg.keyboard.up('a')

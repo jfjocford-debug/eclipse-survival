@@ -60,3 +60,9 @@ Known limits: the minimap still draws the whole local map, not only explored gro
 - Props that rise above their tile (trees, cars, furniture, lamps) clear the fog over the space they occupy while their tile is in view, so they are no longer sliced at the edge of the view.
 - Trees, cars and fences do not block sight. This is intended (decided by the designer) and is now covered by a test.
 - Still open: faint lattice of dark patches at the edge of tiles seen through windows; all radii, fog values and zoom values are first guesses; HUD overlap indoors is to be judged by play-testing.
+
+## Phase 3: explored ground is saved (done)
+
+- Save version 2 adds `state.explored = {exterior: [[y,x0,x1]…], interior: {buildingId: [[y,x0,x1]…]}}`. Version 1 saves still load and are migrated with empty explored ground; the validator rejects damaged runs.
+- `Game.syncExplored()` writes the memory before each save and export; `Visibility` is rebuilt from it when a world loads. Browser check: 228 explored tiles identical before and after a reload.
+- A build older than this one cannot read version 2 saves (it reports an unsupported version rather than losing data).

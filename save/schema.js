@@ -1,7 +1,9 @@
 import { SaveError } from './errors.js';
 
 export const SAVE_FORMAT = 'deadfall-save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+/** Versions this build can read. Version 1 predates explored-ground memory and is migrated on load. */
+export const READABLE_VERSIONS = [1, 2];
 export const MAX_SAVE_BYTES = 20 * 1024 * 1024;
 const TRANSIENT_KEYS = new Set(['particles', 'messages', 'render', 'nearby', 'paused', 'saveStatus', 'location']);
 const UNSAFE_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
@@ -81,6 +83,23 @@ function defaultNumber(target, key, fallback, path, min, max, integer = false) {
   number(target[key], `${path}.${key}`, min, max, integer);
 }
 
+/** Explored-ground memory: {exterior: [[y, x0, x1]…], interior: {buildingId: [[y, x0, x1]…]}}. */
+function runs(value, path) {
+  if (!Array.isArray(value) || value.length > 100000) invalid(path, 'must be a list of tile runs');
+  value.forEach((run, index) => {
+    if (!Array.isArray(run) || run.length !== 3 || !run.every(Number.isInteger) || run[2] < run[1] || run[2] - run[1] > 4096) invalid(`${path}[${index}]`, 'is not a tile run');
+  });
+}
+function explored(state) {
+  if (state.explored === undefined) state.explored = { exterior: [], interior: {} };
+  const e = object(state.explored, 'state.explored');
+  if (e.exterior === undefined) e.exterior = [];
+  if (e.interior === undefined) e.interior = {};
+  runs(e.exterior, 'state.explored.exterior');
+  object(e.interior, 'state.explored.interior');
+  for (const [id, list] of Object.entries(e.interior)) runs(list, `state.explored.interior.${id}`);
+}
+
 /** Returns an independent validated persistent snapshot, preserving extension data. */
 export function normalizeState(input) {
   object(input, 'state');
@@ -91,7 +110,9 @@ export function normalizeState(input) {
   }
   const state = copyJSON(persistent, 'state', { nodes: 0, parents: new Set() });
   if (state.version === undefined) state.version = SAVE_VERSION;
-  if (state.version !== SAVE_VERSION) throw new SaveError(`Save version ${state.version} is not supported by this version of Deadfall.`, 'UNSUPPORTED_VERSION');
+  if (!READABLE_VERSIONS.includes(state.version)) throw new SaveError(`Save version ${state.version} is not supported by this version of Deadfall.`, 'UNSUPPORTED_VERSION');
+  // Migration 1 -> 2: a version-1 survivor has explored nothing yet.
+  state.version = SAVE_VERSION;
   number(state.seed, 'state.seed', -2147483648, 4294967295, true);
   number(state.time, 'state.time', 0, 1440);
   defaultNumber(state, 'day', 1, 'state', 1, 1000000, true);
@@ -140,6 +161,7 @@ export function normalizeState(input) {
       if (!/^-?\d+,-?\d+$/.test(key)) invalid(`state.spawnedChunks[${index}]`, 'must identify a chunk');
     });
   }
+  explored(state);
   if (state.weather === undefined) state.weather = { type: 'overcast', intensity: 0.25, temperature: 16 };
   object(state.weather, 'state.weather');
   if (state.weather.type === undefined) state.weather.type = 'overcast';

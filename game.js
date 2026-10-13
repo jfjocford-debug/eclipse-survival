@@ -8,7 +8,7 @@ import {updateNeeds} from './systems/needs.js';
 import {updateWeather} from './systems/weather.js';
 import {attack,updateCombat} from './systems/combat.js';
 import {UI} from './ui/hud.js';
-import {Visibility} from './world/visibility.js';
+import {Visibility,SplitMemory} from './world/visibility.js';
 import {loadGame,saveGame,clearSave,exportSave,importSave} from './save/indexedDB.js';
 import {ITEMS,RECIPES} from './data/items.js';
 
@@ -153,10 +153,12 @@ export class Game{
  }
  // What the player can see (world/visibility.js). A new world means a new survivor, so a new memory.
  updateVisibility(){
-  if(this.visibilityWorld!==this.world){this.visibility=new Visibility(this.world);this.visibilityWorld=this.world;}
+  if(this.visibilityWorld!==this.world){this.visibility=new Visibility(this.world,SplitMemory.deserialize(this.state.explored));this.visibilityWorld=this.world;}
   const p=this.state.player,w=this.state.weather;
   this.renderer.visibility=this.visibility.update({x:p.x,y:p.y,daylight:w?.daylight,weather:w});
  }
+ // Explored ground is saved with the survivor so the map and the faint memory survive a reload.
+ syncExplored(){if(this.visibility)this.state.explored=this.visibility.memory.serialize();}
  render(alpha){
   const now=performance.now(),dt=now-this.lastFrame;this.lastFrame=now;
   this.state.render={fps:Math.round(this.engine?.fps||1000/Math.max(dt,1)),zoom:this.renderer.zoom};
@@ -166,7 +168,7 @@ export class Game{
  }
  async save(){
   if(this.persistenceBlocked)return;if(this.saveBusy){this.saveQueued=true;return;}this.saveBusy=true;
-  try{this.state.worldChanges=this.world?.serialize()||this.state.worldChanges;this.state.spawnedChunks=[...this.spawned];this.state.saveStatus='Saving…';this.ui?.setSaveStatus?.('saving');await saveGame(this.state);this.ui?.setSaveStatus?.('saved');this.state.saveStatus='Saved just now';this.state.savedAt=Date.now();}
+  try{this.state.worldChanges=this.world?.serialize()||this.state.worldChanges;this.state.spawnedChunks=[...this.spawned];this.syncExplored();this.state.saveStatus='Saving…';this.ui?.setSaveStatus?.('saving');await saveGame(this.state);this.ui?.setSaveStatus?.('saved');this.state.saveStatus='Saved just now';this.state.savedAt=Date.now();}
   catch(e){this.ui?.setSaveStatus?.('error');this.state.saveStatus='Save failed — export a backup';this.notify('Could not save in this browser. Export a backup from the pause menu.');console.warn(e);}
   finally{this.saveBusy=false;if(this.saveQueued){this.saveQueued=false;this.save();}}
  }
@@ -176,7 +178,7 @@ export class Game{
   if(name==='pause'){if(payload?.source==='ui'){s.paused=true;this.input?.clear();}else this.ui.toggle('pause');return;}
   if(name==='resume'){s.paused=false;this.input?.clear();return;}
   if(name==='save'){await this.save();return;}
-  if(name==='export'){s.worldChanges=this.world.serialize();s.spawnedChunks=[...this.spawned];return exportSave(s);}
+  if(name==='export'){s.worldChanges=this.world.serialize();s.spawnedChunks=[...this.spawned];this.syncExplored();return exportSave(s);}
   if(name==='import'){
    const wasBlocked=this.persistenceBlocked;
    try{

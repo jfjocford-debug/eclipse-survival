@@ -1,5 +1,5 @@
 import { SaveError } from './errors.js';
-import { SAVE_FORMAT, SAVE_VERSION, normalizeState, checkSize } from './schema.js';
+import { SAVE_FORMAT, SAVE_VERSION, READABLE_VERSIONS, normalizeState, checkSize } from './schema.js';
 
 export function parsePayload(payload) {
   if (typeof payload === 'string') {
@@ -14,7 +14,7 @@ export function validateEnvelope(envelope) {
   if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope) || envelope.format !== SAVE_FORMAT) {
     throw new SaveError('This file is not a Deadfall save.', 'INVALID_SAVE');
   }
-  if (envelope.version !== SAVE_VERSION) throw new SaveError(`Save version ${envelope.version} is not supported by this version of Deadfall.`, 'UNSUPPORTED_VERSION');
+  if (!READABLE_VERSIONS.includes(envelope.version)) throw new SaveError(`Save version ${envelope.version} is not supported by this version of Deadfall.`, 'UNSUPPORTED_VERSION');
   if (typeof envelope.savedAt !== 'string' || !Number.isFinite(Date.parse(envelope.savedAt))) {
     throw new SaveError('Invalid save: the save date is missing or damaged.', 'INVALID_SAVE');
   }

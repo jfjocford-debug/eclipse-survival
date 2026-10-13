@@ -124,7 +124,7 @@ test('transient objects may be circular and are never traversed', () => {
 
 test('plain prototype state receives missing optional defaults', () => {
   const restored = deserialize({ seed: 42, time: 60, player: { x: 1, y: 2, health: 100, inventory: [] } });
-  assert.equal(restored.version, 1);
+  assert.equal(restored.version, 2);
   assert.equal(restored.day, 1);
   assert.equal(restored.player.stamina, 100);
   assert.deepEqual(restored.zombies, []);
@@ -275,4 +275,25 @@ test('import validates before storage and handles oversized or unreadable files'
   await assert.rejects(api.importSave({ size: MAX_SAVE_BYTES + 1, text() {} }), { code: 'SAVE_TOO_LARGE' });
   await assert.rejects(api.importSave({ async text() { throw Error('Unreadable'); } }), { code: 'FILE_READ_FAILED' });
   await assert.rejects(api.importSave(null), { code: 'INVALID_FILE' });
+});
+
+test('a version-1 save loads and is migrated with empty explored ground', () => {
+  const old = { format: 'deadfall-save', version: 1, savedAt: '2026-10-01T10:00:00.000Z',
+    data: { version: 1, seed: 74219, time: 540, day: 3, elapsed: 63, player: { x: 4, y: 5, health: 90, inventory: [] } } };
+  const restored = deserialize(JSON.parse(JSON.stringify(old)));
+  assert.equal(restored.version, 2);
+  assert.deepEqual(restored.explored, { exterior: [], interior: {} });
+  assert.equal(restored.player.x, 4);
+});
+
+test('explored ground survives a save round trip', () => {
+  const explored = { exterior: [[5, 3, 9], [6, 20, 21]], interior: { 'morrow-house': [[7, 4, 6]] } };
+  const back = deserialize(JSON.parse(JSON.stringify(serialize({ ...state(), explored }))));
+  assert.deepEqual(back.explored, explored);
+});
+
+test('damaged explored ground is rejected', () => {
+  for (const explored of [{ exterior: 'x' }, { exterior: [[1, 5, 2]] }, { exterior: [], interior: { a: [[1, 'x', 3]] } }, 7]) {
+    assert.throws(() => serialize({ ...state(), explored }), /Invalid save/);
+  }
 });
