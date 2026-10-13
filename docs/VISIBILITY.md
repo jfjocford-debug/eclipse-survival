@@ -45,3 +45,11 @@ Decided by Jacques: beyond the player's sight the world is covered by **dark fog
 - The outdoor day radius is now 7 tiles (it was 9, which was not small on a 1366-pixel-wide screen); night 3.5. A tile counts as seen if any of five points in it can be reached, so cones through doors and windows are solid.
 
 Known limits: the minimap still draws the whole local map, not only explored ground; the fog is drawn per ground tile, so tall props (trees, cars, furniture) at the edge of the view can look cut; memory is not yet saved (phase 3); trees, cars and fences do not block sight; all radii, fog darkness values and the light threshold are first guesses for play testing.
+
+## Phase 2b: strict interior / exterior separation (done)
+
+- Inside a building the fog base is fully opaque: the street, other buildings and their props are hidden, apart from tiles seen through an open door or a window (silhouettes at night).
+- Outside, the town keeps its faint shapes, but every interior floor tile and every tall wall that is not in the live view is sealed with opaque fog. Lamps inside hidden rooms no longer glow through.
+- Memory is split (`SplitMemory`): exterior memory is drawn only while outside; interior memory is kept per building and drawn only while inside that same building. Serialized shape for phase 3: `{exterior: runs, interior: {buildingId: runs}}`.
+- Camera: zoom is kept per side (`Renderer.zooms`, default outdoor 1.18, indoor 2.4) and eases over about a third of a second; ranges outdoor 0.6 to 1.8, indoor 1.3 to 2.8. Tuning value: `zooms.indoor`.
+- Cost to watch: at 2.4 the HUD panels cover part of a small room, and the player sees less of it. Decide after play-testing whether the HUD should fade indoors.

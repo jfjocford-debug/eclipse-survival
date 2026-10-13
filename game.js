@@ -189,7 +189,7 @@ export class Game{
   if(name==='restart'){
    await clearSave();this.persistenceBlocked=false;this.resting=false;this.attackHeld=0;this.ai.destroy();this.restore(createState());this.world=new World(this.state.seed,{});this.world.update(this.state.player.x,this.state.player.y);this.renderer.world=this.world;this.renderer.groundBlood?.clear();this.renderer.actorMotion?.clear();this.renderer.cameraReady=false;this.ai=new AIController(this.world);this.spawnInitial();this.initEntities();this.ui.toggle('close');this.state.paused=false;this.lastSave=0;await this.save();this.notify('A new survivor. A new chance.');return;
   }
-  if(name==='zoomIn'||name==='zoomOut'){this.renderer.setZoom(Math.max(.6,Math.min(1.8,this.renderer.zoom+(name==='zoomIn'?.1:-.1))));return;}
+  if(name==='zoomIn'||name==='zoomOut'){this.renderer.setZoom(this.renderer.zooms[this.renderer.zoomMode]+(name==='zoomIn'?.1:-.1));return;}
   if(name==='sound'){s.settings.sound=!s.settings.sound;if(s.settings.sound)this.tone(440,.1);return;}
   if(s.dead)return;
   if(name==='attack'){this.doAttack();return;}

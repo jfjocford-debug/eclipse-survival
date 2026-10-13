@@ -43,7 +43,8 @@ test('CSS projection round trips after camera movement, resize, DPR and zoom',()
   canvas.cssWidth=860;canvas.cssHeight=620;globalThis.devicePixelRatio=2;renderer.resize();
   assert.equal(canvas.width,1720);assert.equal(renderer.width,860);
   const center=renderer.worldToScreen(renderer.camera.x,renderer.camera.y);assert.equal(center.x,430);assert.equal(center.y,334.8);
-  renderer.setZoom(8);assert.equal(renderer.zoom,2.1);renderer.setZoom(.01);assert.equal(renderer.zoom,.55);
+  renderer.setZoom(8);assert.equal(renderer.zoom,1.8);renderer.setZoom(.01);assert.equal(renderer.zoom,.6);
+  renderer.zoomMode='indoor';renderer.setZoom(8);assert.equal(renderer.zoom,2.8);renderer.setZoom(.01);assert.equal(renderer.zoom,1.3);renderer.zoomMode='outdoor';renderer.setZoom(1.18);
   delete globalThis.devicePixelRatio;
 });
 

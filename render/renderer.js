@@ -4,6 +4,7 @@ import { PropAtlas } from './props.js';
 import { CharacterArt } from './characters.js';
 
 const FOG_SCALE=6;
+const ZOOM_RANGE={outdoor:[.6,1.8],indoor:[1.3,2.8]};
 const FOG_COLOR='7,12,15';
 // How opaque the fog is over each kind of tile. Hidden shapes stay faintly visible by design.
 const FOG={hidden:.9,remembered:.74,silhouette:.62,edge:.55,dark:.5};
@@ -14,7 +15,7 @@ export class Renderer {
     this.canvas=canvas;this.world=world;
     this.ctx=canvas.getContext('2d',{alpha:false});
     if(!this.ctx)throw new Error('Deadfall requires a Canvas 2D compatible browser.');
-    this.zoom=1.18;this.camera={x:7.5,y:7.5};this.cameraReady=false;
+    this.zooms={outdoor:1.18,indoor:2.4};this.zoomMode='outdoor';this.zoom=this.zooms.outdoor;this.camera={x:7.5,y:7.5};this.cameraReady=false;
     this.width=1;this.height=1;this.dpr=1;this.origin={x:0,y:0};
     this.tiles=new TileAtlas();this.props=new PropAtlas();this.characters=new CharacterArt();
     this.actorMotion=new Map();this.groundBlood=new Map();this.lastElapsed=0;this.lastNow=0;
@@ -39,7 +40,20 @@ export class Renderer {
     this._vignette=null;
     this.groundLayer=null;
   }
-  setZoom(value) {if(Number.isFinite(value))this.zoom=clamp(value,.55,2.1);this._setOrigin();return this.zoom;}
+  /** Zoom is remembered per side: the street is wide, rooms are close and contained. */
+  setZoom(value) {
+    if(Number.isFinite(value)){const r=ZOOM_RANGE[this.zoomMode];this.zoom=this.zooms[this.zoomMode]=clamp(value,r[0],r[1]);}
+    this._setOrigin();return this.zoom;
+  }
+  /** Ease toward the zoom of the side the player is on. Steps are quantised so the ground cache is rebuilt rarely. */
+  _easeZoom(dt) {
+    const target=this.zooms[this.zoomMode],gap=target-this.zoom;
+    if(Math.abs(gap)<.015){this.zoom=target;return;}
+    if(this.reduceMotion){this.zoom=target;return;}
+    const step=gap*(1-Math.exp(-dt*7));
+    this.zoom=Math.round((this.zoom+step)/.03)*.03;
+    if(Math.abs(target-this.zoom)<.03)this.zoom=target;
+  }
   _setOrigin() {this.origin.x=this.width*.5;this.origin.y=this.height*.54;}
   worldToScreen(x,y,z=0) {
     return {x:this.origin.x+(x-y-this.camera.x+this.camera.y)*TILE_W*.5*this.zoom,
@@ -61,6 +75,8 @@ export class Renderer {
     if(!this.cameraReady||Math.hypot(p.x-this.camera.x,p.y-this.camera.y)>25) {this.camera.x=p.x;this.camera.y=p.y;this.cameraReady=true;}
     const follow=this.reduceMotion?1:1-Math.exp(-dt*9);
     this.camera.x+=(p.x-this.camera.x)*follow;this.camera.y+=(p.y-this.camera.y)*follow;
+    this.zoomMode=this.fogEnabled&&this.visibility?.mode==='indoor'?'indoor':'outdoor';
+    this._easeZoom(dt);
     this._setOrigin();
     const radius=clamp(Math.ceil((this.width/64+this.height/32)/this.zoom*.5)+4,20,44);
     const tiles=this.world.getVisibleTiles(p.x,p.y,radius);
@@ -116,7 +132,7 @@ export class Renderer {
     this._attack(ctx,state);
     this._particles(ctx,state.particles||[]);
     ctx.restore();
-    this._fog(vis);
+    this._fog(vis,tiles,props);
     this._lighting(state,props,night,elapsed);
     this._weather(state,elapsed,night);
     this._vignettePass(state);
@@ -127,20 +143,38 @@ export class Renderer {
    * Dark fog over everything the player cannot see. Drawn at a quarter of the resolution and scaled up,
    * which softens its edges. Remembered places and hidden places keep faint shapes; see FOG.
    */
-  _fog(vis) {
+  _fog(vis,tiles,props) {
     if(!vis)return;
     const f=this.fogCtx,w=this.fogCanvas.width,h=this.fogCanvas.height,k=1/FOG_SCALE;
     f.setTransform(1,0,0,1,0,0);f.globalCompositeOperation='source-over';f.clearRect(0,0,w,h);
-    f.fillStyle=`rgba(${FOG_COLOR},${FOG.hidden})`;f.fillRect(0,0,w,h);
+    const indoor=vis.mode==='indoor',base=indoor?1:FOG.hidden;
+    // Inside, everything outside the room is fully hidden. Outside, the town keeps faint shapes but interiors are sealed.
+    f.fillStyle=`rgba(${FOG_COLOR},${base})`;f.fillRect(0,0,w,h);
     f.globalCompositeOperation='destination-out';
     const hw=TILE_W*.5*this.zoom*k,hh=TILE_H*.5*this.zoom*k;
     const cut=(tx,ty,alpha,lift=0)=>{
       const s=this.worldToScreen(tx+.5,ty+.5);const cx=s.x*k,cy=(s.y-lift*this.zoom)*k;
       if(cx<-hw||cx>w+hw||cy<-hh||cy>h+hh)return;
-      f.fillStyle=`rgba(0,0,0,${clamp(1-alpha/FOG.hidden,0,1)})`;
+      f.fillStyle=`rgba(0,0,0,${clamp(1-alpha/base,0,1)})`;
       f.beginPath();f.moveTo(cx,cy-hh);f.lineTo(cx+hw,cy);f.lineTo(cx,cy+hh);f.lineTo(cx-hw,cy);f.closePath();f.fill();
     };
     const cutAt=(tx,ty,lift)=>cut(tx,ty,0,lift);
+    if(!indoor) {
+      f.globalCompositeOperation='source-over';f.fillStyle=`rgba(${FOG_COLOR},1)`;
+      const seal=(tx,ty,lift=0)=>{
+        const s=this.worldToScreen(tx+.5,ty+.5),cx=s.x*k,cy=(s.y-lift*this.zoom)*k;
+        if(cx<-hw||cx>w+hw||cy<-hh||cy>h+hh)return;
+        f.beginPath();f.moveTo(cx,cy-hh);f.lineTo(cx+hw,cy);f.lineTo(cx,cy+hh);f.lineTo(cx-hw,cy);f.closePath();f.fill();
+      };
+      for(const t of tiles||[])if(t.room&&!vis.tiles.has(t.x+','+t.y))seal(t.x,t.y);
+      // Tall walls belong to the interior too: their inner faces are hidden unless the wall tile is in view.
+      for(const o of props||[]){
+        if(o.type!=='wall'||o.cutaway||!(o.buildingId??o.room))continue;
+        if(vis.tiles.has(o.x+','+o.y))continue;
+        for(let j=0;j<=10;j++)seal(o.x,o.y,j*HEIGHT*.25);
+      }
+      f.globalCompositeOperation='destination-out';
+    }
     // Remembered tiles first, then what is in view on top.
     const memory=vis.memory,reach=Math.ceil((this.width/64+this.height/32)/this.zoom*.5)+6,ox=Math.floor(this.camera.x),oy=Math.floor(this.camera.y);
     if(memory)for(let y=oy-reach;y<=oy+reach;y++){const row=memory.rows.get(y);if(!row)continue;for(let x=ox-reach;x<=ox+reach;x++)if(row.has(x))cut(x,y,FOG.remembered);}
@@ -321,11 +355,12 @@ export class Renderer {
     ctx.globalAlpha=1;
   }
   _lighting(state,props,night,elapsed) {
+    const vis=this.fogEnabled?this.visibility:null;
     const ctx=this.ctx,lctx=this.lightCtx,w=this.lightCanvas.width,h=this.lightCanvas.height;
     const cloud=state.weather?.type==='overcast'?.045:state.weather?.type==='rain'?.075:0;
     lctx.setTransform(1,0,0,1,0,0);lctx.clearRect(0,0,w,h);
     lctx.globalCompositeOperation='source-over';lctx.fillStyle=`rgba(12,24,30,${.055+cloud+night*.65})`;lctx.fillRect(0,0,w,h);
-    const lamps=props.filter(o=>o.type==='lamp'&&o.lit!==false).slice(0,28);
+    const lamps=props.filter(o=>o.type==='lamp'&&o.lit!==false&&(!vis||vis.state(o.x,o.y)!=='hidden'&&vis.state(o.x,o.y)!=='remembered')).slice(0,28);
     const sources=lamps.map(o=>({x:o.x+.5,y:o.y+.5,z:.85,r:132}));
     // A survivor's close visibility keeps navigation readable through the darkest hours.
     sources.push({x:state.player.x,y:state.player.y,z:.4,r:110,player:true});

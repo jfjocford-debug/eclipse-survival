@@ -178,9 +178,53 @@ export class VisibilityMemory {
   }
 }
 
+/**
+ * Memory kept per side. Interiors are remembered per building and shown only while the player is inside
+ * that same building; exteriors are shown only while the player is outside.
+ */
+export class SplitMemory {
+  constructor() { this.exterior = new VisibilityMemory(); this.interior = new Map(); }
+  /** The memory that may be drawn for a viewer: their own building's interior, or the exterior. */
+  forView(mode, buildingId) {
+    if (mode !== 'indoor') return this.exterior;
+    return this.interior.get(buildingId) || EMPTY_MEMORY;
+  }
+  has(x, y) {
+    if (this.exterior.has(x, y)) return true;
+    for (const m of this.interior.values()) if (m.has(x, y)) return true;
+    return false;
+  }
+  record(field) {
+    for (const [k, v] of field.tiles) {
+      if (v.state !== 'visible') continue;
+      const [x, y] = k.split(',').map(Number);
+      if (!v.indoor) { this.exterior.add(x, y); continue; }
+      let m = this.interior.get(v.building ?? null);
+      if (!m) this.interior.set(v.building ?? null, m = new VisibilityMemory());
+      m.add(x, y);
+    }
+  }
+  get count() { let n = this.exterior.count; for (const m of this.interior.values()) n += m.count; return n; }
+  serialize() {
+    const interior = {};
+    for (const [id, m] of this.interior) interior[id ?? ''] = m.serialize();
+    return { exterior: this.exterior.serialize(), interior };
+  }
+  static deserialize(data) {
+    const out = new SplitMemory();
+    if (!data || typeof data !== 'object') return out;
+    out.exterior = VisibilityMemory.deserialize(data.exterior);
+    if (data.interior && typeof data.interior === 'object') {
+      for (const [id, runs] of Object.entries(data.interior)) out.interior.set(id === '' ? null : id, VisibilityMemory.deserialize(runs));
+    }
+    return out;
+  }
+}
+const EMPTY_MEMORY = new VisibilityMemory();
+
 export class Visibility {
   /** `world` needs getTile(x, y) -> {room?, buildingId?} and getProps(x, y, radius). */
-  constructor(world, memory = new VisibilityMemory()) {
+  constructor(world, memory = new SplitMemory()) {
     this.world = world;
     this.memory = memory;
     this.field = null;
@@ -226,7 +270,7 @@ export class Visibility {
 
     const tiles = new Map();
     const tx0 = Math.floor(px), ty0 = Math.floor(py);
-    tiles.set(key(tx0, ty0), { state: 'visible', light: clamp(this._tileLight(here, px, py, daylight, indoorAmbient, lampLight), 0.15, 1), indoor: indoors, fade: 0, rise: 0 });
+    tiles.set(key(tx0, ty0), { state: 'visible', light: clamp(this._tileLight(here, px, py, daylight, indoorAmbient, lampLight), 0.15, 1), indoor: indoors, building: buildingId, fade: 0, rise: 0 });
     const reach = Math.ceil(RULES.maxRange);
     for (let ty = ty0 - reach; ty <= ty0 + reach; ty++) {
       for (let tx = tx0 - reach; tx <= tx0 + reach; tx++) {
@@ -254,7 +298,7 @@ export class Visibility {
         if (state) {
           // Outdoors the edge of the radius fades out instead of ending in a hard line.
           const fade = !tileIndoors && lamp < 0.3 && state === 'visible' ? clamp((dist - open * 0.6) / (open * 0.4), 0, 1) : 0;
-          tiles.set(key(tx, ty), { state, light, indoor: tileIndoors, fade, rise: rise.get(key(tx, ty)) || 0 });
+          tiles.set(key(tx, ty), { state, light, indoor: tileIndoors, building: tile.buildingId ?? null, fade, rise: rise.get(key(tx, ty)) || 0 });
         }
       }
     }
@@ -269,13 +313,14 @@ export class Visibility {
           const n = tiles.get(key(wx + dx, wy + dy));
           if (n && n.state === 'visible' && n.rise === 0 && n.indoor) { touchesRoom = true; break; }
         }
-        if (touchesRoom) tiles.set(k, { state: 'visible', light: 0.5, indoor: true, fade: 0, rise: rise.get(k) || 0 });
+        if (touchesRoom) tiles.set(k, { state: 'visible', light: 0.5, indoor: true, building: buildingId, fade: 0, rise: rise.get(k) || 0 });
       }
     }
-    const field = new VisibilityField({ x: tx0, y: ty0 }, tiles, this.memory, {
+    this.memory.record({ tiles });
+    // Only this side's memory is ever shown: interior while inside, exterior while outside.
+    const field = new VisibilityField({ x: tx0, y: ty0 }, tiles, this.memory.forView(indoors ? 'indoor' : 'outdoor', buildingId), {
       mode: indoors ? 'indoor' : 'outdoor', buildingId, radius: open, clarity: clarity(weather),
     });
-    this.memory.record(field);
     this.field = field;
     return field;
   }

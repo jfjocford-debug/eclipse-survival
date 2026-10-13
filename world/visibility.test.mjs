@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { World } from './generator.js';
-import { Visibility, VisibilityMemory, RULES, clarity, outdoorRadius } from './visibility.js';
+import { Visibility, VisibilityMemory, SplitMemory, RULES, clarity, outdoorRadius } from './visibility.js';
 
 /** A small fake town: one 7 x 6 building at (10,10) with a door in the south wall and a window in the west wall. */
 function town({ door = false, windowBarricaded = 0, lamp = null, windows = true } = {}) {
@@ -109,14 +109,45 @@ test('at night a window shows a silhouette, not detail', () => {
   assert.equal(see(lit, 12, 13), 'visible');
 });
 
-test('seen places are remembered faintly after the player leaves', () => {
+test('interiors are remembered only while inside, exteriors only while outside', () => {
   const v = new Visibility(town({ door: false, windowBarricaded: 1, lamp: [13, 12] }));
   const inRoom = v.update({ ...inside, ...DAY });
   assert.equal(see(inRoom, 14, 13), 'visible');
   const outside = v.update({ x: 4.5, y: 4.5, ...DAY });
-  assert.equal(see(outside, 14, 13), 'remembered');
-  assert.equal(see(outside, 40, 40), 'hidden', 'never seen stays hidden');
-  assert.equal(outside.entityState(14, 13), 'none', 'a remembered tile does not show actors');
+  assert.equal(see(outside, 14, 13), 'hidden', 'a remembered room is not shown from outside');
+  assert.equal(see(outside, 4, 4), 'visible');
+  // The street tile the player just stood on is remembered outside, and hidden again once they are back indoors.
+  const outside2 = v.update({ x: 20.5, y: 4.5, ...DAY });
+  assert.equal(see(outside2, 4, 4), 'remembered');
+  assert.equal(see(outside2, 40, 40), 'hidden', 'never seen stays hidden');
+  assert.equal(outside2.entityState(4, 4), 'none', 'a remembered tile does not show actors');
+  const back = v.update({ ...inside, ...DAY });
+  assert.equal(see(back, 4, 4), 'hidden', 'the street is not remembered from inside');
+});
+
+test('interior memory is kept per building', () => {
+  const m = new SplitMemory();
+  m.record({ tiles: new Map([['5,5', { state: 'visible', indoor: true, building: 'a' }], ['9,9', { state: 'visible', indoor: true, building: 'b' }], ['1,1', { state: 'visible', indoor: false }]]) });
+  assert.equal(m.forView('indoor', 'a').has(5, 5), true);
+  assert.equal(m.forView('indoor', 'a').has(9, 9), false, 'another building is not shown');
+  assert.equal(m.forView('outdoor', null).has(1, 1), true);
+  assert.equal(m.forView('outdoor', null).has(5, 5), false);
+  const back = SplitMemory.deserialize(JSON.parse(JSON.stringify(m.serialize())));
+  assert.equal(back.count, 3);
+  assert.equal(back.forView('indoor', 'b').has(9, 9), true);
+  assert.equal(SplitMemory.deserialize('garbage').count, 0);
+});
+
+test('from inside, tiles outside the room stay hidden except through an opening', () => {
+  const closed = new Visibility(town({ door: false, windowBarricaded: 1 })).update({ ...inside, ...DAY });
+  for (const [k, e] of closed.tiles) assert.equal(e.indoor, true, `exterior tile ${k} leaked into the interior view`);
+  const open = new Visibility(town({ door: true })).update({ ...inside, ...DAY });
+  assert.ok([...open.tiles.values()].some(e => !e.indoor), 'the open door shows some of the street');
+});
+
+test('from outside, interior tiles show only through an opening', () => {
+  const sealed = new Visibility(town({ door: false, windowBarricaded: 1 })).update({ x: 4.5, y: 4.5, ...DAY });
+  assert.equal([...sealed.tiles.values()].filter(e => e.indoor).length, 0);
 });
 
 test('silhouettes are not remembered as seen', () => {
