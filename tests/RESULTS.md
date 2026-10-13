@@ -126,3 +126,7 @@ active and its local HTTP check returned 200. See [cleanup-results.json](cleanup
 - Node: 80 of 80 tests pass (Node 22.22).
 - Chromium (Playwright, headless, software GL), `tests/baseline-chromium.py`: 10 of 10 checks pass: fresh start at spawn, crate collection, save and reload resume position and inventory, pause freezes the clock, Escape resumes, export envelope, import restores the exported survivor, corrupt import rejected. No console errors.
 - Not run: Firefox, WebKit, profiling, long sessions.
+
+## Visibility phase 2 check, 12 October 2026
+
+Node: 95 of 95 pass. Chromium baseline script: 10 of 10 pass after the change. Screenshots checked by eye in headless Chromium: indoors with closed door, open door, outdoors by day, outdoors at night, remembered area. No console errors. Firefox and WebKit not run.

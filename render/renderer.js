@@ -3,6 +3,11 @@ import { TileAtlas } from './tiles.js';
 import { PropAtlas } from './props.js';
 import { CharacterArt } from './characters.js';
 
+const FOG_SCALE=6;
+const FOG_COLOR='7,12,15';
+// How opaque the fog is over each kind of tile. Hidden shapes stay faintly visible by design.
+const FOG={hidden:.9,remembered:.74,silhouette:.62,edge:.55,dark:.5};
+
 /** Canvas2D world renderer. Public projection methods always use CSS pixels. */
 export class Renderer {
   constructor(canvas, world) {
@@ -14,6 +19,8 @@ export class Renderer {
     this.tiles=new TileAtlas();this.props=new PropAtlas();this.characters=new CharacterArt();
     this.actorMotion=new Map();this.groundBlood=new Map();this.lastElapsed=0;this.lastNow=0;
     this.cacheGround=true;this.groundLayer=null;
+    // Visibility (world/visibility.js): the game sets `visibility` each frame; `fogEnabled=false` shows everything for debugging.
+    this.visibility=null;this.fogEnabled=true;this.fogCanvas=surface(1,1);this.fogCtx=this.fogCanvas.getContext('2d');
     this.lightCanvas=surface(1,1);this.lightCtx=this.lightCanvas.getContext('2d');
     this.reduceMotion=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     this._destroyed=false;
@@ -27,6 +34,7 @@ export class Renderer {
     this.canvas.width=Math.round(this.width*this.dpr);this.canvas.height=Math.round(this.height*this.dpr);
     // The half-resolution lighting mask is smooth and cheap even on retina displays.
     this.lightCanvas.width=Math.ceil(this.width*.5);this.lightCanvas.height=Math.ceil(this.height*.5);
+    this.fogCanvas.width=Math.ceil(this.width/FOG_SCALE);this.fogCanvas.height=Math.ceil(this.height/FOG_SCALE);
     this._setOrigin();
     this._vignette=null;
     this.groundLayer=null;
@@ -70,7 +78,11 @@ export class Renderer {
     if(state.nearby)this._interaction(ctx,state.nearby,elapsed);
     // Each object's ground contact determines its depth; actors interleave with furniture.
     const objects=props.map(prop=>({kind:'prop',object:prop,depth:prop.x+prop.y+((prop.w||1)+(prop.h||1))*.5}));
-    for(const zombie of state.zombies||[])if(this._visible(zombie.x,zombie.y))objects.push({kind:'actor',object:zombie,depth:zombie.x+zombie.y+.03});
+    const vis=this.fogEnabled?this.visibility:null;
+    for(const zombie of state.zombies||[]) {
+      const seen=vis?vis.entityState(zombie.x,zombie.y):'full';
+      if(seen!=='none'&&this._visible(zombie.x,zombie.y))objects.push({kind:'actor',object:zombie,depth:zombie.x+zombie.y+.03,shape:seen==='shape'});
+    }
     objects.push({kind:'player',object:p,depth:p.x+p.y+.04});
     objects.sort((a,b)=>a.depth-b.depth||(a.kind==='prop'?-1:1));
     const liveIds=new Set();
@@ -89,10 +101,12 @@ export class Renderer {
         const movement=Math.hypot(o.x-motion.x,o.y-motion.y);
         motion.phase+=Math.min(movement,.3)*7;motion.moving=movement>.001||(isPlayer&&o.moving);
         motion.x=o.x;motion.y=o.y;
+        if(entry.shape)ctx.globalAlpha=.5;
         ellipse(ctx,q[0]+3,q[1]+1,isPlayer?12:11,5,'rgba(13,22,17,.33)');
         if(isPlayer&&o.health>0)this._playerMarker(ctx,o,q,state);
         this.characters.draw(ctx,o,...q,{player:isPlayer,phase:this.reduceMotion?0:motion.phase,moving:motion.moving&&!state.paused,elapsed:this.reduceMotion?0:elapsed});
-        if(!isPlayer&&o.health>0&&o.health<75&&(o.hitTimer>0||Math.hypot(o.x-p.x,o.y-p.y)<3.5)) {
+        ctx.globalAlpha=1;
+        if(!entry.shape&&!isPlayer&&o.health>0&&o.health<75&&(o.hitTimer>0||Math.hypot(o.x-p.x,o.y-p.y)<3.5)) {
           ctx.fillStyle='rgba(20,27,21,.8)';ctx.fillRect(q[0]-10,q[1]-70,20,2);
           ctx.fillStyle='#ad805a';ctx.fillRect(q[0]-10,q[1]-70,20*clamp(o.health/80,0,1),2);
         }
@@ -102,11 +116,48 @@ export class Renderer {
     this._attack(ctx,state);
     this._particles(ctx,state.particles||[]);
     ctx.restore();
+    this._fog(vis);
     this._lighting(state,props,night,elapsed);
     this._weather(state,elapsed,night);
     this._vignettePass(state);
     this.lastElapsed=elapsed;
     this.stats={tiles:tiles.length,props:props.length,actors:liveIds.size,cachedTiles:this.tiles.cache.size,cachedProps:this.props.cache.size};
+  }
+  /**
+   * Dark fog over everything the player cannot see. Drawn at a quarter of the resolution and scaled up,
+   * which softens its edges. Remembered places and hidden places keep faint shapes; see FOG.
+   */
+  _fog(vis) {
+    if(!vis)return;
+    const f=this.fogCtx,w=this.fogCanvas.width,h=this.fogCanvas.height,k=1/FOG_SCALE;
+    f.setTransform(1,0,0,1,0,0);f.globalCompositeOperation='source-over';f.clearRect(0,0,w,h);
+    f.fillStyle=`rgba(${FOG_COLOR},${FOG.hidden})`;f.fillRect(0,0,w,h);
+    f.globalCompositeOperation='destination-out';
+    const hw=TILE_W*.5*this.zoom*k,hh=TILE_H*.5*this.zoom*k;
+    const cut=(tx,ty,alpha,lift=0)=>{
+      const s=this.worldToScreen(tx+.5,ty+.5);const cx=s.x*k,cy=(s.y-lift*this.zoom)*k;
+      if(cx<-hw||cx>w+hw||cy<-hh||cy>h+hh)return;
+      f.fillStyle=`rgba(0,0,0,${clamp(1-alpha/FOG.hidden,0,1)})`;
+      f.beginPath();f.moveTo(cx,cy-hh);f.lineTo(cx+hw,cy);f.lineTo(cx,cy+hh);f.lineTo(cx-hw,cy);f.closePath();f.fill();
+    };
+    const cutAt=(tx,ty,lift)=>cut(tx,ty,0,lift);
+    // Remembered tiles first, then what is in view on top.
+    const memory=vis.memory,reach=Math.ceil((this.width/64+this.height/32)/this.zoom*.5)+6,ox=Math.floor(this.camera.x),oy=Math.floor(this.camera.y);
+    if(memory)for(let y=oy-reach;y<=oy+reach;y++){const row=memory.rows.get(y);if(!row)continue;for(let x=ox-reach;x<=ox+reach;x++)if(row.has(x))cut(x,y,FOG.remembered);}
+    for(const [id,tile] of vis.tiles) {
+      const c=id.indexOf(','),x=+id.slice(0,c),y=+id.slice(c+1);
+      let alpha;
+      if(tile.state==='silhouette')alpha=FOG.silhouette;
+      else {
+        const dark=clamp((.45-tile.light)/.45,0,1)*FOG.dark;
+        alpha=Math.max(tile.fade*FOG.edge,dark);
+      }
+      cut(x,y,alpha);
+      // A tall wall rises over the tiles behind it on screen, so its face must be clear as well.
+      if(tile.rise>.5&&alpha<.2)for(let j=1;j<=Math.ceil(tile.rise*4);j++)cutAt(x,y,j*HEIGHT*.25);
+    }
+    this.ctx.save();this.ctx.imageSmoothingEnabled=true;
+    this.ctx.drawImage(this.fogCanvas,0,0,this.width,this.height);this.ctx.restore();
   }
   _night(minutes) {
     const hour=((minutes%1440)+1440)%1440/60;

@@ -8,6 +8,7 @@ import {updateNeeds} from './systems/needs.js';
 import {updateWeather} from './systems/weather.js';
 import {attack,updateCombat} from './systems/combat.js';
 import {UI} from './ui/hud.js';
+import {Visibility} from './world/visibility.js';
 import {loadGame,saveGame,clearSave,exportSave,importSave} from './save/indexedDB.js';
 import {ITEMS,RECIPES} from './data/items.js';
 
@@ -150,10 +151,17 @@ export class Game{
   if(out?.message)this.notify(out.message);
   if(out?.hit)this.tone(72,.08,'sawtooth',.06);else this.tone(150,.025,'triangle',.02);
  }
+ // What the player can see (world/visibility.js). A new world means a new survivor, so a new memory.
+ updateVisibility(){
+  if(this.visibilityWorld!==this.world){this.visibility=new Visibility(this.world);this.visibilityWorld=this.world;}
+  const p=this.state.player,w=this.state.weather;
+  this.renderer.visibility=this.visibility.update({x:p.x,y:p.y,daylight:w?.daylight,weather:w});
+ }
  render(alpha){
   const now=performance.now(),dt=now-this.lastFrame;this.lastFrame=now;
   this.state.render={fps:Math.round(this.engine?.fps||1000/Math.max(dt,1)),zoom:this.renderer.zoom};
   this.state.resting=this.resting;
+  this.updateVisibility();
   this.renderer.render(this.state,alpha);this.ui.update(this.state);
  }
  async save(){

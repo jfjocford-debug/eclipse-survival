@@ -38,6 +38,12 @@ test('indoors in daylight you see the whole room, bounded by its walls', () => {
   assert.equal(see(f, 25, 12), 'hidden', 'far beyond the building is hidden');
 });
 
+test('from inside, every wall of the room is seen, corners included', () => {
+  const f = new Visibility(town({ door: true })).update({ ...inside, ...DAY });
+  for (let x = 10; x <= 16; x++) for (const y of [10, 15]) assert.equal(see(f, x, y), 'visible', `wall ${x},${y}`);
+  for (let y = 10; y <= 15; y++) for (const x of [10, 16]) assert.equal(see(f, x, y), 'visible', `wall ${x},${y}`);
+});
+
 test('a closed door and barricaded window hide everything outside', () => {
   const v = new Visibility(town({ door: false, windowBarricaded: 1 }));
   const f = v.update({ ...inside, ...DAY });
@@ -51,18 +57,18 @@ test('an open door makes a cone that widens with distance', () => {
   const v = new Visibility(town({ door: true, windowBarricaded: 1 }));
   const f = v.update({ x: 13.5, y: 12.5, ...DAY });
   assert.equal(see(f, 13, 16), 'visible', 'straight through the door');
-  assert.equal(see(f, 13, 19), 'visible');
+  assert.equal(see(f, 13, 18), 'visible');
   assert.equal(see(f, 8, 16), 'hidden', 'beside the building');
   const width = y => { let n = 0; for (let x = 0; x < 30; x++) if (see(f, x, y) === 'visible') n++; return n; };
-  assert.ok(width(20) > width(16), 'the cone is wider farther out');
+  assert.ok(width(18) > width(16), 'the cone is wider farther out');
   assert.equal(see(f, 25, 16), 'hidden', 'outside the cone');
 });
 
 test('a clear window shows the outside; barricading it takes the view away', () => {
   const clear = new Visibility(town({ windowBarricaded: 0 })).update({ x: 13.5, y: 13.5, ...DAY });
-  assert.notEqual(see(clear, 6, 13), 'hidden', 'looking west through the window');
+  assert.notEqual(see(clear, 7, 13), 'hidden', 'looking west through the window');
   const boarded = new Visibility(town({ windowBarricaded: 2 })).update({ x: 13.5, y: 13.5, ...DAY });
-  assert.equal(see(boarded, 6, 13), 'hidden');
+  assert.equal(see(boarded, 7, 13), 'hidden');
 });
 
 test('a dark room stays dark until a lamp is lit', () => {

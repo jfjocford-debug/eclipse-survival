@@ -336,7 +336,7 @@ export class UI {
     ctx.strokeStyle='rgba(205,206,174,.07)';ctx.lineWidth=1;
     for(let x=Math.floor(p.x-radius);x<p.x+radius;x+=8){ctx.beginPath();ctx.moveTo(originX+x*size,0);ctx.lineTo(originX+x*size,height);ctx.stroke();}
     for(let y=Math.floor(p.y-radius);y<p.y+radius;y+=8){ctx.beginPath();ctx.moveTo(0,originY+y*size);ctx.lineTo(width,originY+y*size);ctx.stroke();}
-    for(const zombie of state.zombies||[]){if(zombie.health<=0||Math.hypot(zombie.x-p.x,zombie.y-p.y)>12)continue;ctx.fillStyle='#cf7970';ctx.beginPath();ctx.arc(originX+zombie.x*size,originY+zombie.y*size,large?3:2,0,Math.PI*2);ctx.fill();}
+    for(const zombie of state.zombies||[]){if(zombie.health<=0||Math.hypot(zombie.x-p.x,zombie.y-p.y)>12)continue;if(this.game.visibility?.field&&this.game.visibility.field.entityState(zombie.x,zombie.y)!=='full')continue;ctx.fillStyle='#cf7970';ctx.beginPath();ctx.arc(originX+zombie.x*size,originY+zombie.y*size,large?3:2,0,Math.PI*2);ctx.fill();}
     const px=width/2,py=height/2;
     ctx.strokeStyle='rgba(225,202,153,.2)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(px,py,large?19:12,0,Math.PI*2);ctx.stroke();
     ctx.save();ctx.translate(px,py);ctx.rotate(Math.atan2(p.dirY||0,p.dirX||1)+Math.PI/2);ctx.fillStyle='#edce8f';ctx.shadowColor='#161b15';ctx.shadowBlur=5;ctx.beginPath();const marker=large?8:5;ctx.moveTo(0,-marker);ctx.lineTo(marker*.75,marker*.7);ctx.lineTo(0,marker*.3);ctx.lineTo(-marker*.75,marker*.7);ctx.closePath();ctx.fill();ctx.restore();

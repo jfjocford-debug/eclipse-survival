@@ -14,7 +14,7 @@
  */
 
 export const RULES = Object.freeze({
-  dayRadius: 9,          // tiles, clear day outdoors
+  dayRadius: 7,          // tiles, clear day outdoors
   nightRadius: 3.5,      // tiles, night outdoors without light
   silhouetteRange: 6,    // tiles, how far a shape can be made out through glass
   nearRadius: 1.5,       // tiles you can always feel around you, even in total darkness
@@ -73,9 +73,26 @@ function trace(x0, y0, x1, y1, sight) {
   return { blocked: true, glass };
 }
 
+/**
+ * A tile counts as seen if any of five points in it can be reached, which keeps cones through doors and
+ * windows solid instead of speckled. Returns the clearest ray found, or null.
+ */
+const SAMPLES = [[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]];
+function clearRay(px, py, cx, cy, sight) {
+  let best = null;
+  for (const [ox, oy] of SAMPLES) {
+    const ray = trace(px, py, cx + ox, cy + oy, sight);
+    if (ray.blocked) continue;
+    if (!ray.glass) return ray;
+    best = ray;
+  }
+  return best;
+}
+
 /** Which tile keys block sight, and which are glass, from the live props near the viewer. */
 function sightMap(props) {
   const sight = new Map();
+  const rise = new Map();   // how tall each sight-stopping tile is, in height units (the renderer needs it)
   for (const prop of props) {
     if (prop.removed || prop.destroyed) continue;
     let kind = 0;
@@ -87,10 +104,11 @@ function sightMap(props) {
       for (let x = prop.x; x < prop.x + (prop.w || 1); x++) {
         const k = key(x, y);
         if (sight.get(k) !== OPAQUE) sight.set(k, kind);
+        rise.set(k, Math.max(rise.get(k) || 0, prop.cutaway ? 0.3 : prop.type === 'wall' ? 2.5 : 2.2));
       }
     }
   }
-  return sight;
+  return { sight, rise };
 }
 
 /** The result of one visibility computation. */
@@ -108,6 +126,8 @@ export class VisibilityField {
     if (entry) return entry.state;
     return this.memory?.has(Math.floor(x), Math.floor(y)) ? 'remembered' : 'hidden';
   }
+  /** The stored entry for a tile ({state, light, indoor, fade}) or undefined. */
+  entry(x, y) { return this.tiles.get(key(Math.floor(x), Math.floor(y))); }
   /** 0 (dark) to 1 (bright) for a visible tile, otherwise 0. */
   light(x, y) { return this.tiles.get(key(Math.floor(x), Math.floor(y)))?.light ?? 0; }
   /** What to draw for an actor or loot item: 'full', 'shape' (silhouette only) or 'none'. */
@@ -179,7 +199,7 @@ export class Visibility {
     const indoors = Boolean(here.room);
     const buildingId = here.buildingId ?? null;
     const props = world.getProps(px, py, RULES.maxRange + 2);
-    const sight = sightMap(props);
+    const { sight, rise } = sightMap(props);
     const lamps = props.filter(p => p.type === 'lamp' && p.lit !== false && !p.removed && !p.destroyed);
     const open = outdoorRadius(daylight, weather);
     const far = RULES.dayRadius * clarity(weather);
@@ -206,7 +226,7 @@ export class Visibility {
 
     const tiles = new Map();
     const tx0 = Math.floor(px), ty0 = Math.floor(py);
-    tiles.set(key(tx0, ty0), { state: 'visible', light: clamp(this._tileLight(here, px, py, daylight, indoorAmbient, lampLight), 0.15, 1) });
+    tiles.set(key(tx0, ty0), { state: 'visible', light: clamp(this._tileLight(here, px, py, daylight, indoorAmbient, lampLight), 0.15, 1), indoor: indoors, fade: 0, rise: 0 });
     const reach = Math.ceil(RULES.maxRange);
     for (let ty = ty0 - reach; ty <= ty0 + reach; ty++) {
       for (let tx = tx0 - reach; tx <= tx0 + reach; tx++) {
@@ -214,8 +234,8 @@ export class Visibility {
         const cx = tx + 0.5, cy = ty + 0.5;
         const dist = Math.hypot(cx - px, cy - py);
         if (dist > RULES.maxRange) continue;
-        const ray = trace(px, py, cx, cy, sight);
-        if (ray.blocked) continue;
+        const ray = clearRay(px, py, cx, cy, sight);
+        if (!ray) continue;
         const tile = world.getTile(tx, ty);
         const tileIndoors = Boolean(tile.room);
         const light = clamp(this._tileLight(tile, cx, cy, daylight, indoorAmbient, lampLight), 0, 1);
@@ -231,7 +251,25 @@ export class Visibility {
           state = 'visible';
         }
         if (!state && ray.glass && dist <= RULES.silhouetteRange * clarity(weather)) state = 'silhouette';
-        if (state) tiles.set(key(tx, ty), { state, light });
+        if (state) {
+          // Outdoors the edge of the radius fades out instead of ending in a hard line.
+          const fade = !tileIndoors && lamp < 0.3 && state === 'visible' ? clamp((dist - open * 0.6) / (open * 0.4), 0, 1) : 0;
+          tiles.set(key(tx, ty), { state, light, indoor: tileIndoors, fade, rise: rise.get(key(tx, ty)) || 0 });
+        }
+      }
+    }
+    // Seen from inside, the outer corners of the room's walls count as seen too; the ray to them grazes two walls.
+    if (indoors) {
+      for (const [k, kind] of sight) {
+        if (kind !== OPAQUE || tiles.has(k)) continue;
+        const [wx, wy] = k.split(',').map(Number);
+        if (world.getTile(wx, wy).buildingId !== buildingId) continue;
+        let touchesRoom = false;
+        for (let dy = -1; dy <= 1 && !touchesRoom; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const n = tiles.get(key(wx + dx, wy + dy));
+          if (n && n.state === 'visible' && n.rise === 0 && n.indoor) { touchesRoom = true; break; }
+        }
+        if (touchesRoom) tiles.set(k, { state: 'visible', light: 0.5, indoor: true, fade: 0, rise: rise.get(k) || 0 });
       }
     }
     const field = new VisibilityField({ x: tx0, y: ty0 }, tiles, this.memory, {
