@@ -328,11 +328,13 @@ export class UI {
     const width=canvas.width,height=canvas.height,p=state.player,size=Math.min(width,height)/(radius*2),originX=width/2-p.x*size,originY=height/2-p.y*size;
     ctx.fillStyle='#1d2421';ctx.fillRect(0,0,width,height);
     const colors={grass:'#303a30',road:'#484b44',floor:'#7a7360',sidewalk:'#636357',dirt:'#514c38'};
-    const world=this.game.world;
-    const tiles=world.getVisibleTiles?.(p.x,p.y,radius)||[];
+    const world=this.game.world,vis=this.game.visibility;
+    // Only ground the survivor has seen is drawn; the rest of the map stays blank.
+    const explored=(x,y)=>!vis||vis.memory.has(x,y)||Boolean(vis.field?.entry(x,y));
+    const tiles=(world.getVisibleTiles?.(p.x,p.y,radius)||[]).filter(t=>explored(t.x,t.y));
     for(const tile of tiles){const x=originX+tile.x*size,y=originY+tile.y*size;if(x<-size||y<-size||x>width||y>height)continue;ctx.fillStyle=colors[tile.type]||colors.grass;ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(size)+.2,Math.ceil(size)+.2);}
     const props=world.getProps?.(p.x,p.y,radius)||[];
-    for(const prop of props){if(!['wall','door','window','tree','car','fence'].includes(prop.type))continue;ctx.fillStyle=prop.type==='wall'?'#a19a81':prop.type==='tree'?'#222e23':prop.type==='door'||prop.type==='window'?'#b08f58':'#5a665a';ctx.fillRect(originX+prop.x*size,originY+prop.y*size,Math.max(1,size*(prop.w||1)),Math.max(1,size*(prop.h||1)));}
+    for(const prop of props){if(!explored(prop.x,prop.y))continue;if(!['wall','door','window','tree','car','fence'].includes(prop.type))continue;ctx.fillStyle=prop.type==='wall'?'#a19a81':prop.type==='tree'?'#222e23':prop.type==='door'||prop.type==='window'?'#b08f58':'#5a665a';ctx.fillRect(originX+prop.x*size,originY+prop.y*size,Math.max(1,size*(prop.w||1)),Math.max(1,size*(prop.h||1)));}
     ctx.strokeStyle='rgba(205,206,174,.07)';ctx.lineWidth=1;
     for(let x=Math.floor(p.x-radius);x<p.x+radius;x+=8){ctx.beginPath();ctx.moveTo(originX+x*size,0);ctx.lineTo(originX+x*size,height);ctx.stroke();}
     for(let y=Math.floor(p.y-radius);y<p.y+radius;y+=8){ctx.beginPath();ctx.moveTo(0,originY+y*size);ctx.lineTo(width,originY+y*size);ctx.stroke();}

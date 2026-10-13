@@ -53,3 +53,10 @@ Known limits: the minimap still draws the whole local map, not only explored gro
 - Memory is split (`SplitMemory`): exterior memory is drawn only while outside; interior memory is kept per building and drawn only while inside that same building. Serialized shape for phase 3: `{exterior: runs, interior: {buildingId: runs}}`.
 - Camera: zoom is kept per side (`Renderer.zooms`, default outdoor 1.18, indoor 2.4) and eases over about a third of a second; ranges outdoor 0.6 to 1.8, indoor 1.3 to 2.8. Tuning value: `zooms.indoor`.
 - Cost to watch: at 2.4 the HUD panels cover part of a small room, and the player sees less of it. Decide after play-testing whether the HUD should fade indoors.
+
+## Known limits cleared (phase 2c)
+
+- Minimap and map panel draw only ground the survivor has seen (current view or any memory); unexplored ground stays blank.
+- Props that rise above their tile (trees, cars, furniture, lamps) clear the fog over the space they occupy while their tile is in view, so they are no longer sliced at the edge of the view.
+- Trees, cars and fences do not block sight. This is intended (decided by the designer) and is now covered by a test.
+- Still open: faint lattice of dark patches at the edge of tiles seen through windows; all radii, fog values and zoom values are first guesses; HUD overlap indoors is to be judged by play-testing.

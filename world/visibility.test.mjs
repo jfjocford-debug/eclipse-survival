@@ -215,3 +215,16 @@ test('rules are exposed and frozen', () => {
   assert.ok(Object.isFrozen(RULES));
   assert.ok(RULES.nightRadius < RULES.dayRadius);
 });
+
+test('trees, cars and fences do not block sight', () => {
+  const props = [
+    { id: 't', type: 'tree', x: 12, y: 10, w: 1, h: 1 },
+    { id: 'c', type: 'car', x: 12, y: 12, w: 3, h: 2 },
+    { id: 'f', type: 'fence', x: 12, y: 8, w: 1, h: 1 },
+  ];
+  const world = { getTile: () => ({}), getProps: () => props };
+  const f = new Visibility(world).update({ x: 10.5, y: 10.5, ...DAY });
+  assert.equal(see(f, 14, 10), 'visible', 'behind the tree');
+  assert.equal(see(f, 15, 13), 'visible', 'behind the car');
+  assert.equal(see(f, 14, 8), 'visible', 'behind the fence');
+});

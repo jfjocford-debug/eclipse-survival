@@ -151,9 +151,9 @@ export class Renderer {
     // Inside, everything outside the room is fully hidden. Outside, the town keeps faint shapes but interiors are sealed.
     f.fillStyle=`rgba(${FOG_COLOR},${base})`;f.fillRect(0,0,w,h);
     f.globalCompositeOperation='destination-out';
-    const hw=TILE_W*.5*this.zoom*k,hh=TILE_H*.5*this.zoom*k;
-    const cut=(tx,ty,alpha,lift=0)=>{
-      const s=this.worldToScreen(tx+.5,ty+.5);const cx=s.x*k,cy=(s.y-lift*this.zoom)*k;
+    const hw0=TILE_W*.5*this.zoom*k,hw=hw0,hh=TILE_H*.5*this.zoom*k;
+    const cut=(tx,ty,alpha,lift=0,wide=1)=>{
+      const s=this.worldToScreen(tx+.5,ty+.5);const cx=s.x*k,cy=(s.y-lift*this.zoom)*k,hw=hw0*wide;
       if(cx<-hw||cx>w+hw||cy<-hh||cy>h+hh)return;
       f.fillStyle=`rgba(0,0,0,${clamp(1-alpha/base,0,1)})`;
       f.beginPath();f.moveTo(cx,cy-hh);f.lineTo(cx+hw,cy);f.lineTo(cx,cy+hh);f.lineTo(cx-hw,cy);f.closePath();f.fill();
@@ -178,17 +178,28 @@ export class Renderer {
     // Remembered tiles first, then what is in view on top.
     const memory=vis.memory,reach=Math.ceil((this.width/64+this.height/32)/this.zoom*.5)+6,ox=Math.floor(this.camera.x),oy=Math.floor(this.camera.y);
     if(memory)for(let y=oy-reach;y<=oy+reach;y++){const row=memory.rows.get(y);if(!row)continue;for(let x=ox-reach;x<=ox+reach;x++)if(row.has(x))cut(x,y,FOG.remembered);}
+    const tileAlpha=tile=>{
+      if(tile.state==='silhouette')return FOG.silhouette;
+      return Math.max(tile.fade*FOG.edge,clamp((.45-tile.light)/.45,0,1)*FOG.dark);
+    };
     for(const [id,tile] of vis.tiles) {
-      const c=id.indexOf(','),x=+id.slice(0,c),y=+id.slice(c+1);
-      let alpha;
-      if(tile.state==='silhouette')alpha=FOG.silhouette;
-      else {
-        const dark=clamp((.45-tile.light)/.45,0,1)*FOG.dark;
-        alpha=Math.max(tile.fade*FOG.edge,dark);
-      }
+      const c=id.indexOf(','),x=+id.slice(0,c),y=+id.slice(c+1),alpha=tileAlpha(tile);
       cut(x,y,alpha);
       // A tall wall rises over the tiles behind it on screen, so its face must be clear as well.
       if(tile.rise>.5&&alpha<.2)for(let j=1;j<=Math.ceil(tile.rise*4);j++)cutAt(x,y,j*HEIGHT*.25);
+    }
+    // Trees, cars, furniture and lamps also rise above their ground tile. Clear the space they occupy so a
+    // prop standing in view is never sliced by the fog that lies over the tile behind it.
+    for(const o of props||[]) {
+      if(o.type==='wall'||o.type==='door'||o.type==='window')continue;
+      const rotated=o.rotation===1||o.rotation===90||o.rotation===270,fw=rotated?(o.h||1):(o.w||1),fd=rotated?(o.w||1):(o.h||1);
+      const reach=Math.min(220,this.props.get(o).oy-6),wide=o.type==='tree'?1.7:1;
+      for(let dy=0;dy<fd;dy++)for(let dx=0;dx<fw;dx++) {
+        const tile=vis.tiles.get((o.x+dx)+','+(o.y+dy));
+        if(!tile||tile.state!=='visible')continue;
+        const alpha=tileAlpha(tile);
+        for(let lift=14;lift<reach;lift+=14)cut(o.x+dx,o.y+dy,alpha,lift,wide);
+      }
     }
     this.ctx.save();this.ctx.imageSmoothingEnabled=true;
     this.ctx.drawImage(this.fogCanvas,0,0,this.width,this.height);this.ctx.restore();
